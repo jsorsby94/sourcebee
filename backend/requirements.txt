@@ -1,0 +1,12 @@
+fastapi==0.116.1
+uvicorn[standard]==0.35.0
+redis==5.2.1
+pydantic-settings==2.9.1
+idna==3.10
+pytest==8.3.5
+httpx==0.28.1
+python-multipart==0.0.12
+qrcode==7.4.2
+Pillow==10.4.0
+pillow-heif==0.20.0
+pypdf==4.3.1

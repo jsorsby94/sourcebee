@@ -1,0 +1,194 @@
+services:
+  redis-dev:
+    profiles: ["dev"]
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1000"]
+    volumes:
+      - redis_data_dev:/data
+    restart: unless-stopped
+    networks:
+      - cache_internal_dev
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  backend-dev:
+    profiles: ["dev"]
+    image: simple-tools-hub-backend-dev
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      APP_ENV: development
+      LOG_LEVEL: ${DEV_LOG_LEVEL:-INFO}
+      REDIS_URL: redis://redis-dev:6379/0
+      RATE_LIMIT_DEFAULT_PER_MINUTE: ${DEV_RATE_LIMIT_DEFAULT_PER_MINUTE:-120}
+      RATE_LIMIT_SSL_PER_MINUTE: ${DEV_RATE_LIMIT_SSL_PER_MINUTE:-30}
+      RATE_LIMIT_FILE_PER_MINUTE: ${DEV_RATE_LIMIT_FILE_PER_MINUTE:-30}
+      RATE_LIMIT_PDF_PER_MINUTE: ${DEV_RATE_LIMIT_PDF_PER_MINUTE:-15}
+      SSL_CACHE_TTL_SECONDS: ${DEV_SSL_CACHE_TTL_SECONDS:-300}
+      REQUEST_BODY_MAX_BYTES: ${DEV_REQUEST_BODY_MAX_BYTES:-32768}
+      FILE_REQUEST_MAX_BYTES: ${DEV_FILE_REQUEST_MAX_BYTES:-26214400}
+      SSL_CONNECT_TIMEOUT_SECONDS: ${DEV_SSL_CONNECT_TIMEOUT_SECONDS:-4}
+      SSL_TOTAL_TIMEOUT_SECONDS: ${DEV_SSL_TOTAL_TIMEOUT_SECONDS:-8}
+      PDF_MAX_PAGES: ${DEV_PDF_MAX_PAGES:-200}
+      PDF_MERGE_MAX_FILES: ${DEV_PDF_MERGE_MAX_FILES:-20}
+      IMAGE_MAX_PIXELS: ${DEV_IMAGE_MAX_PIXELS:-40000000}
+      IMAGE_MAX_DIMENSION: ${DEV_IMAGE_MAX_DIMENSION:-10000}
+      CORS_ALLOWED_ORIGINS: http://localhost:3004
+    expose:
+      - "8000"
+    depends_on:
+      redis-dev:
+        condition: service_healthy
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - app_internal_dev
+      - cache_internal_dev
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  frontend-dev:
+    profiles: ["dev"]
+    image: simple-tools-hub-frontend-dev
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      NEXT_PUBLIC_APP_ENV: dev
+      NEXT_PUBLIC_SITE_URL: http://localhost:3004
+      NEXT_PUBLIC_ADS_ENABLED: ${DEV_NEXT_PUBLIC_ADS_ENABLED:-false}
+      BACKEND_INTERNAL_URL: http://backend-dev:8000
+      PROXY_TIMEOUT_MS: ${DEV_PROXY_TIMEOUT_MS:-10000}
+    ports:
+      - "3004:3000"
+    depends_on:
+      backend-dev:
+        condition: service_healthy
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - app_internal_dev
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+  redis-prod:
+    profiles: ["prod"]
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1000"]
+    volumes:
+      - redis_data_prod:/data
+    restart: unless-stopped
+    networks:
+      - cache_internal_prod
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  backend-prod:
+    profiles: ["prod"]
+    image: simple-tools-hub-backend-prod
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      APP_ENV: production
+      LOG_LEVEL: ${PROD_LOG_LEVEL:-INFO}
+      REDIS_URL: redis://redis-prod:6379/0
+      RATE_LIMIT_DEFAULT_PER_MINUTE: ${PROD_RATE_LIMIT_DEFAULT_PER_MINUTE:-120}
+      RATE_LIMIT_SSL_PER_MINUTE: ${PROD_RATE_LIMIT_SSL_PER_MINUTE:-30}
+      RATE_LIMIT_FILE_PER_MINUTE: ${PROD_RATE_LIMIT_FILE_PER_MINUTE:-30}
+      RATE_LIMIT_PDF_PER_MINUTE: ${PROD_RATE_LIMIT_PDF_PER_MINUTE:-15}
+      SSL_CACHE_TTL_SECONDS: ${PROD_SSL_CACHE_TTL_SECONDS:-300}
+      REQUEST_BODY_MAX_BYTES: ${PROD_REQUEST_BODY_MAX_BYTES:-32768}
+      FILE_REQUEST_MAX_BYTES: ${PROD_FILE_REQUEST_MAX_BYTES:-26214400}
+      SSL_CONNECT_TIMEOUT_SECONDS: ${PROD_SSL_CONNECT_TIMEOUT_SECONDS:-4}
+      SSL_TOTAL_TIMEOUT_SECONDS: ${PROD_SSL_TOTAL_TIMEOUT_SECONDS:-8}
+      PDF_MAX_PAGES: ${PROD_PDF_MAX_PAGES:-200}
+      PDF_MERGE_MAX_FILES: ${PROD_PDF_MERGE_MAX_FILES:-20}
+      IMAGE_MAX_PIXELS: ${PROD_IMAGE_MAX_PIXELS:-40000000}
+      IMAGE_MAX_DIMENSION: ${PROD_IMAGE_MAX_DIMENSION:-10000}
+      CORS_ALLOWED_ORIGINS: http://localhost:3005
+    expose:
+      - "8000"
+    depends_on:
+      redis-prod:
+        condition: service_healthy
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - app_internal_prod
+      - cache_internal_prod
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  frontend-prod:
+    profiles: ["prod"]
+    image: simple-tools-hub-frontend-prod
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      NEXT_PUBLIC_APP_ENV: prod
+      NEXT_PUBLIC_SITE_URL: http://localhost:3005
+      NEXT_PUBLIC_ADS_ENABLED: ${PROD_NEXT_PUBLIC_ADS_ENABLED:-false}
+      BACKEND_INTERNAL_URL: http://backend-prod:8000
+      PROXY_TIMEOUT_MS: ${PROD_PROXY_TIMEOUT_MS:-10000}
+    ports:
+      - "3005:3000"
+    depends_on:
+      backend-prod:
+        condition: service_healthy
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - app_internal_prod
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  redis_data_dev:
+  redis_data_prod:
+
+networks:
+  app_internal_dev:
+    driver: bridge
+  cache_internal_dev:
+    driver: bridge
+  app_internal_prod:
+    driver: bridge
+  cache_internal_prod:
+    driver: bridge
