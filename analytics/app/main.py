@@ -466,7 +466,7 @@ def analytics_events(
     }
 
 
-@app.get("/dashboard", response_class=HTMLResponse)
+@app.get("/", response_class=HTMLResponse)
 def dashboard() -> str:
     return """<!doctype html>
 <html lang=\"en\">
