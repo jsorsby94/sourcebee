@@ -37,7 +37,10 @@ services:
       PDF_MERGE_MAX_FILES: ${DEV_PDF_MERGE_MAX_FILES:-20}
       IMAGE_MAX_PIXELS: ${DEV_IMAGE_MAX_PIXELS:-40000000}
       IMAGE_MAX_DIMENSION: ${DEV_IMAGE_MAX_DIMENSION:-10000}
-      CORS_ALLOWED_ORIGINS: http://localhost:3004
+      CORS_ALLOWED_ORIGINS: http://localhost:4000
+      ANALYTICS_ENABLED: true
+      ANALYTICS_INTERNAL_URL: ${DEV_ANALYTICS_INTERNAL_URL:-http://analytics-dev:4100}
+      ANALYTICS_TIMEOUT_MS: ${DEV_ANALYTICS_TIMEOUT_MS:-800}
     expose:
       - "8000"
     depends_on:
@@ -66,12 +69,18 @@ services:
       dockerfile: Dockerfile
     environment:
       NEXT_PUBLIC_APP_ENV: dev
-      NEXT_PUBLIC_SITE_URL: http://localhost:3004
+      NEXT_PUBLIC_SITE_URL: http://localhost:4000
       NEXT_PUBLIC_ADS_ENABLED: ${DEV_NEXT_PUBLIC_ADS_ENABLED:-false}
+      NEXT_PUBLIC_ANALYTICS_ENABLED: true
+      NEXT_PUBLIC_VISITOR_COOKIE_NAME: ${DEV_NEXT_PUBLIC_VISITOR_COOKIE_NAME:-sthub_vid}
+      NEXT_PUBLIC_VISITOR_COOKIE_MAX_AGE_SECONDS: ${DEV_NEXT_PUBLIC_VISITOR_COOKIE_MAX_AGE_SECONDS:-31536000}
+      PORT: 4000
       BACKEND_INTERNAL_URL: http://backend-dev:8000
+      ANALYTICS_INTERNAL_URL: ${DEV_ANALYTICS_INTERNAL_URL:-http://analytics-dev:4100}
+      ANALYTICS_TIMEOUT_MS: ${DEV_ANALYTICS_TIMEOUT_MS:-800}
       PROXY_TIMEOUT_MS: ${DEV_PROXY_TIMEOUT_MS:-10000}
     ports:
-      - "3004:3000"
+      - "4000:4000"
     depends_on:
       backend-dev:
         condition: service_healthy
@@ -84,7 +93,56 @@ services:
     networks:
       - app_internal_dev
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3000"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:4000"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+  mongodb-dev:
+    profiles: ["dev"]
+    image: mongo:7
+    volumes:
+      - mongodb_data_dev:/data/db
+    restart: unless-stopped
+    networks:
+      - analytics_internal_dev
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ ping: 1 }).ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  analytics-dev:
+    profiles: ["dev"]
+    image: simple-tools-hub-analytics-dev
+    build:
+      context: ./analytics
+      dockerfile: Dockerfile
+    environment:
+      APP_ENV: development
+      LOG_LEVEL: ${DEV_ANALYTICS_LOG_LEVEL:-INFO}
+      MONGODB_URL: ${DEV_MONGODB_URL:-mongodb://mongodb-dev:27017}
+      MONGODB_DB_NAME: ${DEV_MONGODB_DB_NAME:-simple_tools_hub_dev_analytics}
+      INGEST_MAX_BYTES: ${DEV_ANALYTICS_INGEST_MAX_BYTES:-16384}
+      DASHBOARD_DEFAULT_WINDOW_HOURS: ${DEV_ANALYTICS_DASHBOARD_HOURS:-24}
+    expose:
+      - "4100"
+    ports:
+      - "127.0.0.1:4100:4100"
+    depends_on:
+      mongodb-dev:
+        condition: service_healthy
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - app_internal_dev
+      - analytics_internal_dev
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:4100/health', timeout=3)"]
       interval: 20s
       timeout: 5s
       retries: 5
@@ -127,7 +185,10 @@ services:
       PDF_MERGE_MAX_FILES: ${PROD_PDF_MERGE_MAX_FILES:-20}
       IMAGE_MAX_PIXELS: ${PROD_IMAGE_MAX_PIXELS:-40000000}
       IMAGE_MAX_DIMENSION: ${PROD_IMAGE_MAX_DIMENSION:-10000}
-      CORS_ALLOWED_ORIGINS: http://localhost:3005
+      CORS_ALLOWED_ORIGINS: http://localhost:4001
+      ANALYTICS_ENABLED: true
+      ANALYTICS_INTERNAL_URL: ${PROD_ANALYTICS_INTERNAL_URL:-http://analytics-prod:4100}
+      ANALYTICS_TIMEOUT_MS: ${PROD_ANALYTICS_TIMEOUT_MS:-800}
     expose:
       - "8000"
     depends_on:
@@ -156,12 +217,18 @@ services:
       dockerfile: Dockerfile
     environment:
       NEXT_PUBLIC_APP_ENV: prod
-      NEXT_PUBLIC_SITE_URL: http://localhost:3005
+      NEXT_PUBLIC_SITE_URL: http://localhost:4001
       NEXT_PUBLIC_ADS_ENABLED: ${PROD_NEXT_PUBLIC_ADS_ENABLED:-false}
+      NEXT_PUBLIC_ANALYTICS_ENABLED: true
+      NEXT_PUBLIC_VISITOR_COOKIE_NAME: ${PROD_NEXT_PUBLIC_VISITOR_COOKIE_NAME:-sthub_vid}
+      NEXT_PUBLIC_VISITOR_COOKIE_MAX_AGE_SECONDS: ${PROD_NEXT_PUBLIC_VISITOR_COOKIE_MAX_AGE_SECONDS:-31536000}
+      PORT: 4000
       BACKEND_INTERNAL_URL: http://backend-prod:8000
+      ANALYTICS_INTERNAL_URL: ${PROD_ANALYTICS_INTERNAL_URL:-http://analytics-prod:4100}
+      ANALYTICS_TIMEOUT_MS: ${PROD_ANALYTICS_TIMEOUT_MS:-800}
       PROXY_TIMEOUT_MS: ${PROD_PROXY_TIMEOUT_MS:-10000}
     ports:
-      - "3005:3000"
+      - "4001:4000"
     depends_on:
       backend-prod:
         condition: service_healthy
@@ -174,7 +241,56 @@ services:
     networks:
       - app_internal_prod
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3000"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:4000"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+  mongodb-prod:
+    profiles: ["prod"]
+    image: mongo:7
+    volumes:
+      - mongodb_data_prod:/data/db
+    restart: unless-stopped
+    networks:
+      - analytics_internal_prod
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ ping: 1 }).ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  analytics-prod:
+    profiles: ["prod"]
+    image: simple-tools-hub-analytics-prod
+    build:
+      context: ./analytics
+      dockerfile: Dockerfile
+    environment:
+      APP_ENV: production
+      LOG_LEVEL: ${PROD_ANALYTICS_LOG_LEVEL:-INFO}
+      MONGODB_URL: ${PROD_MONGODB_URL:-mongodb://mongodb-prod:27017}
+      MONGODB_DB_NAME: ${PROD_MONGODB_DB_NAME:-simple_tools_hub_prod_analytics}
+      INGEST_MAX_BYTES: ${PROD_ANALYTICS_INGEST_MAX_BYTES:-16384}
+      DASHBOARD_DEFAULT_WINDOW_HOURS: ${PROD_ANALYTICS_DASHBOARD_HOURS:-24}
+    expose:
+      - "4100"
+    ports:
+      - "127.0.0.1:4101:4100"
+    depends_on:
+      mongodb-prod:
+        condition: service_healthy
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - app_internal_prod
+      - analytics_internal_prod
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:4100/health', timeout=3)"]
       interval: 20s
       timeout: 5s
       retries: 5
@@ -182,13 +298,19 @@ services:
 volumes:
   redis_data_dev:
   redis_data_prod:
+  mongodb_data_dev:
+  mongodb_data_prod:
 
 networks:
   app_internal_dev:
     driver: bridge
   cache_internal_dev:
     driver: bridge
+  analytics_internal_dev:
+    driver: bridge
   app_internal_prod:
     driver: bridge
   cache_internal_prod:
+    driver: bridge
+  analytics_internal_prod:
     driver: bridge

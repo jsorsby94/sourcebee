@@ -9,6 +9,10 @@ export function Footer() {
           <p className="mt-2 max-w-md text-sm text-slate-600 dark:text-slate-300">
             Fast, practical web tools with security-first defaults, strong SEO foundations, and production-minded architecture.
           </p>
+          <p className="mt-2 max-w-md text-xs text-slate-500 dark:text-slate-400">
+            Privacy note: tool inputs and generated files/passwords are never stored. We do collect behavior analytics metadata
+            such as IP, routes, and tool usage.
+          </p>
         </div>
         <div className="md:text-right">
           <p className="text-sm text-slate-600 dark:text-slate-300">Explore</p>

@@ -5,7 +5,6 @@ from typing import Any
 
 from app.core.errors import AppError
 
-
 MAX_SEGMENT_LENGTH = 4096
 
 
@@ -18,15 +17,21 @@ def _decode_base64url_segment(segment: str, segment_name: str) -> dict[str, Any]
     try:
         raw = base64.urlsafe_b64decode(padded.encode("ascii"))
     except Exception as exc:  # noqa: BLE001
-        raise AppError(400, "invalid_jwt", f"JWT {segment_name} segment is not valid base64url") from exc
+        raise AppError(
+            400, "invalid_jwt", f"JWT {segment_name} segment is not valid base64url"
+        ) from exc
 
     try:
         parsed = json.loads(raw.decode("utf-8"))
     except Exception as exc:  # noqa: BLE001
-        raise AppError(400, "invalid_jwt", f"JWT {segment_name} segment is not valid JSON") from exc
+        raise AppError(
+            400, "invalid_jwt", f"JWT {segment_name} segment is not valid JSON"
+        ) from exc
 
     if not isinstance(parsed, dict):
-        raise AppError(400, "invalid_jwt", f"JWT {segment_name} segment must decode to an object")
+        raise AppError(
+            400, "invalid_jwt", f"JWT {segment_name} segment must decode to an object"
+        )
 
     return parsed
 
@@ -43,7 +48,9 @@ def _to_datetime_if_timestamp(value: Any) -> datetime | None:
 def decode_jwt(token: str) -> dict[str, Any]:
     parts = token.strip().split(".")
     if len(parts) not in {2, 3}:
-        raise AppError(400, "invalid_jwt", "JWT must have header.payload[.signature] format")
+        raise AppError(
+            400, "invalid_jwt", "JWT must have header.payload[.signature] format"
+        )
 
     header = _decode_base64url_segment(parts[0], "header")
     payload = _decode_base64url_segment(parts[1], "payload")

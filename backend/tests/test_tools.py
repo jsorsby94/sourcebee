@@ -33,7 +33,9 @@ def test_jwt_decode_invalid() -> None:
 
 def test_base64_encode() -> None:
     with TestClient(app) as client:
-        response = client.post("/api/tools/base64", json={"mode": "encode", "input": "hello"})
+        response = client.post(
+            "/api/tools/base64", json={"mode": "encode", "input": "hello"}
+        )
 
     assert response.status_code == 200
     assert response.json()["output"] == "aGVsbG8="
@@ -104,7 +106,9 @@ def test_password_generator_random() -> None:
 
 def test_color_converter_hex_to_rgba() -> None:
     with TestClient(app) as client:
-        response = client.post("/api/tools/color-converter", json={"input": "#14B8A6CC"})
+        response = client.post(
+            "/api/tools/color-converter", json={"input": "#14B8A6CC"}
+        )
 
     assert response.status_code == 200
     data = response.json()
@@ -187,6 +191,11 @@ def test_pdf_compress() -> None:
 
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("application/pdf")
+    assert "source-compressed.pdf" in response.headers["content-disposition"]
+    assert int(response.headers["x-original-bytes"]) > 0
+    assert int(response.headers["x-compressed-bytes"]) > 0
+    assert int(response.headers["x-saved-bytes"]) >= 0
+    assert float(response.headers["x-saved-percent"]) >= 0
 
 
 def test_password_generator_privacy_headers() -> None:

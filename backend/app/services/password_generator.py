@@ -74,17 +74,27 @@ def _build_random_password(
         pools.append("!@#$%^&*()-_=+[]{}:,.?~")
 
     if not pools:
-        raise AppError(400, "invalid_password_options", "At least one character set must be selected")
+        raise AppError(
+            400,
+            "invalid_password_options",
+            "At least one character set must be selected",
+        )
 
     if length < len(pools):
-        raise AppError(400, "invalid_password_options", "Length is too short for selected character sets")
+        raise AppError(
+            400,
+            "invalid_password_options",
+            "Length is too short for selected character sets",
+        )
 
     rng = secrets.SystemRandom()
 
     required_chars = [rng.choice(pool) for pool in pools]
     all_chars = "".join(pools)
 
-    remaining_chars = [rng.choice(all_chars) for _ in range(length - len(required_chars))]
+    remaining_chars = [
+        rng.choice(all_chars) for _ in range(length - len(required_chars))
+    ]
     result = required_chars + remaining_chars
     rng.shuffle(result)
 

@@ -81,7 +81,9 @@ def _convert_linear(category: str, value: float, from_unit: str, to_unit: str) -
     return base_value / units[to_key]
 
 
-def convert_units(category: str, value: float, from_unit: str, to_unit: str) -> dict[str, object]:
+def convert_units(
+    category: str, value: float, from_unit: str, to_unit: str
+) -> dict[str, object]:
     category_key = category.lower()
 
     if category_key == "temperature":

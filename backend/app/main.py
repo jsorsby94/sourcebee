@@ -10,6 +10,7 @@ from redis.exceptions import RedisError
 
 from app.api.routes.health import router as health_router
 from app.api.routes.tools import router as tools_router
+from app.core.analytics import emit_backend_event
 from app.core.config import Settings, get_settings
 from app.core.errors import AppError
 from app.core.logging import setup_logging
@@ -44,7 +45,9 @@ async def lifespan(app: FastAPI):
             logger.warning("redis_close_failed")
 
 
-def _error_response(status_code: int, code: str, message: str, request_id: str) -> JSONResponse:
+def _error_response(
+    status_code: int, code: str, message: str, request_id: str
+) -> JSONResponse:
     return JSONResponse(
         status_code=status_code,
         content={"error": {"code": code, "message": message, "request_id": request_id}},
@@ -88,16 +91,32 @@ def create_app() -> FastAPI:
             f"app_error:{exc.code}",
             extra={"request_id": request_id, "path": request.url.path},
         )
+        await emit_backend_event(
+            request,
+            event_type="backend_app_error",
+            status_code=exc.status_code,
+            meta={"error_code": exc.code},
+        )
         return _error_response(exc.status_code, exc.code, exc.message, request_id)
 
     @app.exception_handler(RequestValidationError)
-    async def handle_validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
+    async def handle_validation_error(
+        request: Request, exc: RequestValidationError
+    ) -> JSONResponse:
         request_id = getattr(request.state, "request_id", str(uuid4()))
         logger.warning(
             "validation_error",
             extra={"request_id": request_id, "path": request.url.path},
         )
-        return _error_response(422, "invalid_request", "Request validation failed", request_id)
+        await emit_backend_event(
+            request,
+            event_type="backend_validation_error",
+            status_code=422,
+            meta={"error_code": "invalid_request"},
+        )
+        return _error_response(
+            422, "invalid_request", "Request validation failed", request_id
+        )
 
     @app.exception_handler(Exception)
     async def handle_unexpected_error(request: Request, exc: Exception) -> JSONResponse:
@@ -106,7 +125,15 @@ def create_app() -> FastAPI:
             "unexpected_error",
             extra={"request_id": request_id, "path": request.url.path},
         )
-        return _error_response(500, "internal_error", "An internal error occurred", request_id)
+        await emit_backend_event(
+            request,
+            event_type="backend_unexpected_error",
+            status_code=500,
+            meta={"error_code": "internal_error"},
+        )
+        return _error_response(
+            500, "internal_error", "An internal error occurred", request_id
+        )
 
     return app
 

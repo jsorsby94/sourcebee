@@ -5,6 +5,7 @@ from typing import Literal
 from fastapi import Request
 from redis.exceptions import RedisError
 
+from app.core.analytics import emit_backend_event
 from app.core.config import get_settings
 from app.core.errors import AppError
 from app.core.redis import get_redis_from_request
@@ -29,7 +30,15 @@ async def enforce_rate_limit(request: Request, endpoint: str, limit: int) -> Non
 
     if redis_client is None:
         if settings.is_production:
-            raise AppError(503, "rate_limit_unavailable", "Rate limiting is currently unavailable")
+            await emit_backend_event(
+                request,
+                event_type="rate_limit_unavailable",
+                status_code=503,
+                meta={"endpoint": endpoint},
+            )
+            raise AppError(
+                503, "rate_limit_unavailable", "Rate limiting is currently unavailable"
+            )
         return
 
     ip = get_client_ip(request)
@@ -43,11 +52,27 @@ async def enforce_rate_limit(request: Request, endpoint: str, limit: int) -> Non
     except RedisError as exc:
         logger.warning("rate_limit_redis_error", extra={"path": request.url.path})
         if settings.is_production:
-            raise AppError(503, "rate_limit_unavailable", "Rate limiting is currently unavailable") from exc
+            await emit_backend_event(
+                request,
+                event_type="rate_limit_redis_error",
+                status_code=503,
+                meta={"endpoint": endpoint},
+            )
+            raise AppError(
+                503, "rate_limit_unavailable", "Rate limiting is currently unavailable"
+            ) from exc
         return
 
     if count > limit:
-        raise AppError(429, "rate_limited", "Too many requests. Please try again shortly")
+        await emit_backend_event(
+            request,
+            event_type="rate_limited",
+            status_code=429,
+            meta={"endpoint": endpoint, "limit": limit, "count": count},
+        )
+        raise AppError(
+            429, "rate_limited", "Too many requests. Please try again shortly"
+        )
 
 
 def _resolve_limit(profile: RateLimitProfile) -> int:

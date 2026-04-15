@@ -48,7 +48,12 @@ def _parse_color(input_value: str) -> tuple[int, int, int, int]:
         value = normalized[1:]
         if len(value) == 6:
             return int(value[0:2], 16), int(value[2:4], 16), int(value[4:6], 16), 255
-        return int(value[0:2], 16), int(value[2:4], 16), int(value[4:6], 16), int(value[6:8], 16)
+        return (
+            int(value[0:2], 16),
+            int(value[2:4], 16),
+            int(value[4:6], 16),
+            int(value[6:8], 16),
+        )
 
     rgb_match = RGB_RE.fullmatch(normalized)
     if rgb_match:
@@ -62,9 +67,15 @@ def _parse_color(input_value: str) -> tuple[int, int, int, int]:
             a = _parse_alpha(parts[3])
             return r, g, b, a
 
-        raise AppError(400, "invalid_color", "RGB(A) input must contain 3 or 4 channels")
+        raise AppError(
+            400, "invalid_color", "RGB(A) input must contain 3 or 4 channels"
+        )
 
-    raise AppError(400, "invalid_color", "Supported formats: #RGB, #RRGGBB, #RGBA, #RRGGBBAA, rgb(), rgba()")
+    raise AppError(
+        400,
+        "invalid_color",
+        "Supported formats: #RGB, #RRGGBB, #RGBA, #RRGGBBAA, rgb(), rgba()",
+    )
 
 
 def convert_color(input_value: str) -> dict[str, str]:

@@ -18,7 +18,11 @@ def format_json(operation: str, input_text: str, sort_keys: bool) -> dict[str, o
         return {"operation": operation, "valid": True, "output": output}
 
     if operation == "minify":
-        output = json.dumps(parsed, separators=(",", ":"), ensure_ascii=False, sort_keys=sort_keys)
+        output = json.dumps(
+            parsed, separators=(",", ":"), ensure_ascii=False, sort_keys=sort_keys
+        )
         return {"operation": operation, "valid": True, "output": output}
 
-    raise AppError(400, "invalid_operation", "Operation must be pretty, minify, or validate")
+    raise AppError(
+        400, "invalid_operation", "Operation must be pretty, minify, or validate"
+    )

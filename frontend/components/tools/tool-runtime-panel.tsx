@@ -61,6 +61,12 @@ function OutputText({ value }: { value: string }) {
   );
 }
 
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
 function PrivacyNote({ text }: { text: string }) {
   return (
     <p className="rounded-lg bg-teal-50 px-3 py-2 text-xs text-teal-800 dark:bg-teal-900/30 dark:text-teal-200">
@@ -781,6 +787,16 @@ function PdfUtilitiesPanel({ onError, onClearError }: { onError: (message: strin
       </Button>
 
       <BinaryResult result={result} label="PDF result generated" />
+      {mode === "compress" && result?.pdfCompression ? (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200">
+          <p className="font-semibold">
+            Compression saved {formatBytes(result.pdfCompression.savedBytes)} ({result.pdfCompression.savedPercent.toFixed(2)}%)
+          </p>
+          <p className="mt-1">
+            Original: {formatBytes(result.pdfCompression.originalBytes)} | Compressed: {formatBytes(result.pdfCompression.compressedBytes)}
+          </p>
+        </div>
+      ) : null}
     </div>
   );
 }

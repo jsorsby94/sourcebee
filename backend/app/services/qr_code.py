@@ -28,7 +28,9 @@ def generate_qr_code(
         raise AppError(400, "invalid_qr_input", "QR content is too long")
 
     if box_size < 1 or box_size > 20:
-        raise AppError(400, "invalid_qr_options", "QR box size must be between 1 and 20")
+        raise AppError(
+            400, "invalid_qr_options", "QR box size must be between 1 and 20"
+        )
     if border < 0 or border > 12:
         raise AppError(400, "invalid_qr_options", "QR border must be between 0 and 12")
 

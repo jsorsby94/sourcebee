@@ -25,21 +25,31 @@ def _validate_page_count(reader: PdfReader, settings: Settings) -> None:
     if page_count < 1:
         raise AppError(400, "invalid_pdf", "PDF has no pages")
     if page_count > settings.pdf_max_pages:
-        raise AppError(400, "pdf_too_large", f"PDF page count exceeds {settings.pdf_max_pages}")
+        raise AppError(
+            400, "pdf_too_large", f"PDF page count exceeds {settings.pdf_max_pages}"
+        )
 
 
 def merge_pdfs(contents: list[bytes], settings: Settings) -> bytes:
     if not contents:
         raise AppError(400, "invalid_pdf", "At least one PDF file is required")
     if len(contents) > settings.pdf_merge_max_files:
-        raise AppError(400, "too_many_files", f"PDF merge supports up to {settings.pdf_merge_max_files} files")
+        raise AppError(
+            400,
+            "too_many_files",
+            f"PDF merge supports up to {settings.pdf_merge_max_files} files",
+        )
 
     writer = PdfWriter()
     total_pages = 0
 
     for content in contents:
         if len(content) > settings.file_request_max_bytes:
-            raise AppError(413, "payload_too_large", "One or more PDF files exceed maximum allowed size")
+            raise AppError(
+                413,
+                "payload_too_large",
+                "One or more PDF files exceed maximum allowed size",
+            )
 
         reader = _reader_from_bytes(content)
         _validate_page_count(reader, settings)
@@ -48,7 +58,11 @@ def merge_pdfs(contents: list[bytes], settings: Settings) -> bytes:
             writer.add_page(page)
             total_pages += 1
             if total_pages > settings.pdf_max_pages:
-                raise AppError(400, "pdf_too_large", f"Merged PDF exceeds {settings.pdf_max_pages} pages")
+                raise AppError(
+                    400,
+                    "pdf_too_large",
+                    f"Merged PDF exceeds {settings.pdf_max_pages} pages",
+                )
 
     output = BytesIO()
     writer.write(output)
@@ -69,35 +83,55 @@ def _parse_page_range(page_range: str, total_pages: int) -> list[int]:
                 start = int(start_str)
                 end = int(end_str)
             except ValueError as exc:
-                raise AppError(400, "invalid_page_range", "Page range contains non-numeric values") from exc
+                raise AppError(
+                    400, "invalid_page_range", "Page range contains non-numeric values"
+                ) from exc
 
             if start > end:
-                raise AppError(400, "invalid_page_range", "Page range start cannot be greater than end")
+                raise AppError(
+                    400,
+                    "invalid_page_range",
+                    "Page range start cannot be greater than end",
+                )
 
             for page_number in range(start, end + 1):
                 if page_number < 1 or page_number > total_pages:
-                    raise AppError(400, "invalid_page_range", "Page range references pages outside document bounds")
+                    raise AppError(
+                        400,
+                        "invalid_page_range",
+                        "Page range references pages outside document bounds",
+                    )
                 selections.add(page_number - 1)
 
         else:
             try:
                 page_number = int(token)
             except ValueError as exc:
-                raise AppError(400, "invalid_page_range", "Page range contains non-numeric values") from exc
+                raise AppError(
+                    400, "invalid_page_range", "Page range contains non-numeric values"
+                ) from exc
 
             if page_number < 1 or page_number > total_pages:
-                raise AppError(400, "invalid_page_range", "Page range references pages outside document bounds")
+                raise AppError(
+                    400,
+                    "invalid_page_range",
+                    "Page range references pages outside document bounds",
+                )
             selections.add(page_number - 1)
 
     if not selections:
-        raise AppError(400, "invalid_page_range", "Page range must include at least one page")
+        raise AppError(
+            400, "invalid_page_range", "Page range must include at least one page"
+        )
 
     return sorted(selections)
 
 
 def split_pdf(content: bytes, page_range: str, settings: Settings) -> bytes:
     if len(content) > settings.file_request_max_bytes:
-        raise AppError(413, "payload_too_large", "PDF file exceeds maximum allowed size")
+        raise AppError(
+            413, "payload_too_large", "PDF file exceeds maximum allowed size"
+        )
 
     reader = _reader_from_bytes(content)
     _validate_page_count(reader, settings)
@@ -115,7 +149,9 @@ def split_pdf(content: bytes, page_range: str, settings: Settings) -> bytes:
 
 def compress_pdf(content: bytes, settings: Settings) -> bytes:
     if len(content) > settings.file_request_max_bytes:
-        raise AppError(413, "payload_too_large", "PDF file exceeds maximum allowed size")
+        raise AppError(
+            413, "payload_too_large", "PDF file exceeds maximum allowed size"
+        )
 
     reader = _reader_from_bytes(content)
     _validate_page_count(reader, settings)

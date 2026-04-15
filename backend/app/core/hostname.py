@@ -17,7 +17,9 @@ def normalize_hostname(raw_hostname: str) -> str:
         raise AppError(400, "invalid_hostname", "Hostname is required")
 
     if any(ch in value for ch in FORBIDDEN_HOSTNAME_CHARS):
-        raise AppError(400, "invalid_hostname", "Hostname must not contain URL components")
+        raise AppError(
+            400, "invalid_hostname", "Hostname must not contain URL components"
+        )
 
     try:
         ipaddress.ip_address(value)
@@ -29,7 +31,9 @@ def normalize_hostname(raw_hostname: str) -> str:
     try:
         ascii_hostname = idna.encode(value, uts46=True).decode("ascii")
     except idna.IDNAError as exc:
-        raise AppError(400, "invalid_hostname", "Hostname contains invalid IDN characters") from exc
+        raise AppError(
+            400, "invalid_hostname", "Hostname contains invalid IDN characters"
+        ) from exc
 
     if len(ascii_hostname) > 253:
         raise AppError(400, "invalid_hostname", "Hostname is too long")

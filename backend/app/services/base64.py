@@ -14,7 +14,9 @@ def run_base64(mode: str, value: str) -> dict[str, str]:
             decoded_bytes = base64.b64decode(padded, validate=True)
             decoded = decoded_bytes.decode("utf-8")
         except Exception as exc:  # noqa: BLE001
-            raise AppError(400, "invalid_base64", "Input is not valid base64 UTF-8 text") from exc
+            raise AppError(
+                400, "invalid_base64", "Input is not valid base64 UTF-8 text"
+            ) from exc
         return {"mode": "decode", "output": decoded}
 
     raise AppError(400, "invalid_mode", "Mode must be encode or decode")

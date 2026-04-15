@@ -15,6 +15,8 @@ Use Caddy or Nginx in front of the app for:
 - Keep backend private to internal network.
 - Expose only reverse proxy/public frontend service.
 - Restrict egress from backend if platform supports it.
+- Keep analytics ingest on internal network only.
+- Bind analytics dashboard to localhost or private admin network only.
 
 ## Runtime hardening
 
@@ -28,3 +30,5 @@ Use Caddy or Nginx in front of the app for:
 - Centralized structured logs with request IDs.
 - Track rate-limit events and blocked SSL targets.
 - Alert on spikes in 4xx/5xx and endpoint abuse patterns.
+- Monitor analytics ingest rate and MongoDB growth.
+- Set explicit data governance for retained behavior metadata (IP and usage telemetry).

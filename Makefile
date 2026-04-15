@@ -1,7 +1,7 @@
 .PHONY: help up down dev prod v
 
-DEV_SERVICES := frontend-dev backend-dev redis-dev
-PROD_SERVICES := frontend-prod backend-prod redis-prod
+DEV_SERVICES := frontend-dev backend-dev redis-dev analytics-dev mongodb-dev
+PROD_SERVICES := frontend-prod backend-prod redis-prod analytics-prod mongodb-prod
 
 ENV := $(if $(filter prod,$(MAKECMDGOALS)),prod,dev)
 SERVICES := $(if $(filter prod,$(MAKECMDGOALS)),$(PROD_SERVICES),$(DEV_SERVICES))
@@ -24,7 +24,7 @@ down:
 	docker compose rm -f $(SERVICES)
 	@if [ "$(WITH_VOLUMES)" != "" ]; then \
 		echo "Removing named volumes for $(ENV)..."; \
-		docker volume ls -q | grep -E '_redis_data_$(ENV)$$' | xargs -r docker volume rm; \
+		docker volume ls -q | grep -E '_(redis_data|mongodb_data)_$(ENV)$$' | xargs -r docker volume rm; \
 	fi
 
 dev prod v:

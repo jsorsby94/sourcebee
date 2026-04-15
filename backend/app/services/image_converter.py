@@ -27,17 +27,25 @@ def _normalize_target_format(value: str) -> TargetImageFormat:
         normalized = "jpeg"
 
     if normalized not in TARGET_FORMAT_MAP:
-        raise AppError(400, "invalid_image_format", "Target format must be png, jpeg, webp, gif, bmp, or tiff")
+        raise AppError(
+            400,
+            "invalid_image_format",
+            "Target format must be png, jpeg, webp, gif, bmp, or tiff",
+        )
 
     return normalized  # type: ignore[return-value]
 
 
-def convert_image(content: bytes, target_format: str, quality: int, settings: Settings) -> tuple[bytes, str, str]:
+def convert_image(
+    content: bytes, target_format: str, quality: int, settings: Settings
+) -> tuple[bytes, str, str]:
     if not content:
         raise AppError(400, "invalid_image", "Image file is required")
 
     if len(content) > settings.file_request_max_bytes:
-        raise AppError(413, "payload_too_large", "Image file exceeds maximum allowed size")
+        raise AppError(
+            413, "payload_too_large", "Image file exceeds maximum allowed size"
+        )
 
     target = _normalize_target_format(target_format)
     pil_format, mime = TARGET_FORMAT_MAP[target]
@@ -48,11 +56,18 @@ def convert_image(content: bytes, target_format: str, quality: int, settings: Se
             if width <= 0 or height <= 0:
                 raise AppError(400, "invalid_image", "Image has invalid dimensions")
 
-            if width > settings.image_max_dimension or height > settings.image_max_dimension:
-                raise AppError(400, "image_too_large", "Image dimensions exceed allowed limits")
+            if (
+                width > settings.image_max_dimension
+                or height > settings.image_max_dimension
+            ):
+                raise AppError(
+                    400, "image_too_large", "Image dimensions exceed allowed limits"
+                )
 
             if width * height > settings.image_max_pixels:
-                raise AppError(400, "image_too_large", "Image pixel count exceeds allowed limits")
+                raise AppError(
+                    400, "image_too_large", "Image pixel count exceeds allowed limits"
+                )
 
             processed = source_image.copy()
 
@@ -70,7 +85,9 @@ def convert_image(content: bytes, target_format: str, quality: int, settings: Se
             converted_bytes = output.getvalue()
 
     except UnidentifiedImageError as exc:
-        raise AppError(400, "invalid_image", "Uploaded file is not a supported image") from exc
+        raise AppError(
+            400, "invalid_image", "Uploaded file is not a supported image"
+        ) from exc
     except OSError as exc:
         raise AppError(400, "invalid_image", "Failed to decode image file") from exc
 

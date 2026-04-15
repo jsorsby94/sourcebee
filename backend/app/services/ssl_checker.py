@@ -35,7 +35,9 @@ def _resolve_public_ips(hostname: str) -> list[str]:
             proto=socket.IPPROTO_TCP,
         )
     except socket.gaierror as exc:
-        raise AppError(400, "dns_resolution_failed", "Could not resolve hostname") from exc
+        raise AppError(
+            400, "dns_resolution_failed", "Could not resolve hostname"
+        ) from exc
 
     ips: list[str] = []
     for item in address_info:
@@ -45,7 +47,9 @@ def _resolve_public_ips(hostname: str) -> list[str]:
                 ips.append(ip)
 
     if not ips:
-        raise AppError(403, "blocked_target", "Hostname does not resolve to public IP addresses")
+        raise AppError(
+            403, "blocked_target", "Hostname does not resolve to public IP addresses"
+        )
 
     return ips
 
@@ -59,12 +63,16 @@ def _perform_tls_handshake(hostname: str, ip: str, timeout_seconds: float) -> di
             certificate = tls_sock.getpeercert()
 
     if not certificate:
-        raise AppError(502, "ssl_unavailable", "No certificate received from target host")
+        raise AppError(
+            502, "ssl_unavailable", "No certificate received from target host"
+        )
 
     return certificate
 
 
-def _fetch_certificate(hostname: str, connect_timeout_seconds: float) -> dict[str, object]:
+def _fetch_certificate(
+    hostname: str, connect_timeout_seconds: float
+) -> dict[str, object]:
     public_ips = _resolve_public_ips(hostname)
 
     last_error: Exception | None = None
@@ -78,7 +86,9 @@ def _fetch_certificate(hostname: str, connect_timeout_seconds: float) -> dict[st
             last_error = exc
 
     if cert is None:
-        raise AppError(502, "ssl_unavailable", "Failed to retrieve certificate from host") from last_error
+        raise AppError(
+            502, "ssl_unavailable", "Failed to retrieve certificate from host"
+        ) from last_error
 
     issuer = _flatten_name(cert.get("issuer", ()))
     subject = _flatten_name(cert.get("subject", ()))
@@ -87,7 +97,9 @@ def _fetch_certificate(hostname: str, connect_timeout_seconds: float) -> dict[st
         valid_from = _parse_cert_time(cert["notBefore"])
         valid_to = _parse_cert_time(cert["notAfter"])
     except Exception as exc:  # noqa: BLE001
-        raise AppError(502, "ssl_parse_error", "Failed to parse certificate validity dates") from exc
+        raise AppError(
+            502, "ssl_parse_error", "Failed to parse certificate validity dates"
+        ) from exc
 
     sans = sorted(
         {
@@ -110,7 +122,9 @@ def _fetch_certificate(hostname: str, connect_timeout_seconds: float) -> dict[st
     }
 
 
-async def check_ssl_certificate(hostname: str, redis_client: Redis | None, settings: Settings) -> dict[str, object]:
+async def check_ssl_certificate(
+    hostname: str, redis_client: Redis | None, settings: Settings
+) -> dict[str, object]:
     normalized = normalize_hostname(hostname)
     cache_key = f"cache:ssl:{normalized}"
 
@@ -124,7 +138,9 @@ async def check_ssl_certificate(hostname: str, redis_client: Redis | None, setti
 
     try:
         result = await asyncio.wait_for(
-            asyncio.to_thread(_fetch_certificate, normalized, settings.ssl_connect_timeout_seconds),
+            asyncio.to_thread(
+                _fetch_certificate, normalized, settings.ssl_connect_timeout_seconds
+            ),
             timeout=settings.ssl_total_timeout_seconds,
         )
     except asyncio.TimeoutError as exc:
@@ -132,7 +148,9 @@ async def check_ssl_certificate(hostname: str, redis_client: Redis | None, setti
 
     if redis_client is not None:
         try:
-            await redis_client.set(cache_key, json.dumps(result), ex=settings.ssl_cache_ttl_seconds)
+            await redis_client.set(
+                cache_key, json.dumps(result), ex=settings.ssl_cache_ttl_seconds
+            )
         except RedisError:
             pass
 

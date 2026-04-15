@@ -1,4 +1,5 @@
 import type { ToolApiSlug } from "@/lib/tool-registry";
+import { VISITOR_COOKIE_NAME } from "@/lib/analytics-config";
 
 export interface ToolApiErrorPayload {
   error: {
@@ -25,6 +26,40 @@ export interface BinaryToolResponse {
   blob: Blob;
   contentType: string;
   filename: string;
+  pdfCompression?: PdfCompressionSummary;
+}
+
+export interface PdfCompressionSummary {
+  originalBytes: number;
+  compressedBytes: number;
+  savedBytes: number;
+  savedPercent: number;
+}
+
+function readVisitorId(): string | undefined {
+  if (typeof document === "undefined") {
+    return undefined;
+  }
+
+  const cookie = document.cookie
+    .split(";")
+    .map((chunk) => chunk.trim())
+    .find((chunk) => chunk.startsWith(`${VISITOR_COOKIE_NAME}=`));
+
+  if (!cookie) {
+    return undefined;
+  }
+
+  const value = cookie.slice(VISITOR_COOKIE_NAME.length + 1);
+  if (!value) {
+    return undefined;
+  }
+
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
 }
 
 function parseFilename(contentDisposition: string | null): string | null {
@@ -43,6 +78,46 @@ function parseFilename(contentDisposition: string | null): string | null {
 
   const basicMatch = contentDisposition.match(/filename="?([^";]+)"?/i);
   return basicMatch?.[1] ?? null;
+}
+
+function parseIntegerHeader(headerValue: string | null): number | null {
+  if (!headerValue) {
+    return null;
+  }
+  const value = Number.parseInt(headerValue, 10);
+  if (!Number.isFinite(value) || value < 0) {
+    return null;
+  }
+  return value;
+}
+
+function parseDecimalHeader(headerValue: string | null): number | null {
+  if (!headerValue) {
+    return null;
+  }
+  const value = Number.parseFloat(headerValue);
+  if (!Number.isFinite(value) || value < 0) {
+    return null;
+  }
+  return value;
+}
+
+function parsePdfCompressionSummary(headers: Headers): PdfCompressionSummary | undefined {
+  const originalBytes = parseIntegerHeader(headers.get("x-original-bytes"));
+  const compressedBytes = parseIntegerHeader(headers.get("x-compressed-bytes"));
+  const savedBytes = parseIntegerHeader(headers.get("x-saved-bytes"));
+  const savedPercent = parseDecimalHeader(headers.get("x-saved-percent"));
+
+  if (originalBytes === null || compressedBytes === null || savedBytes === null || savedPercent === null) {
+    return undefined;
+  }
+
+  return {
+    originalBytes,
+    compressedBytes,
+    savedBytes,
+    savedPercent,
+  };
 }
 
 async function parseJsonSafe(response: Response): Promise<unknown> {
@@ -64,12 +139,14 @@ function normalizeApiError(status: number, body: unknown): ToolApiError {
 export async function callTool<TReq, TRes>(tool: ToolApiSlug, payload: TReq): Promise<TRes> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 10_000);
+  const visitorId = readVisitorId();
 
   try {
     const response = await fetch(`/api/tools/${tool}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...(visitorId ? { "X-Visitor-ID": visitorId } : {}),
       },
       body: JSON.stringify(payload),
       signal: controller.signal,
@@ -103,10 +180,14 @@ export async function callTool<TReq, TRes>(tool: ToolApiSlug, payload: TReq): Pr
 export async function callBinaryTool(tool: ToolApiSlug, formData: FormData): Promise<BinaryToolResponse> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 20_000);
+  const visitorId = readVisitorId();
 
   try {
     const response = await fetch(`/api/tools/${tool}`, {
       method: "POST",
+      headers: {
+        ...(visitorId ? { "X-Visitor-ID": visitorId } : {}),
+      },
       body: formData,
       signal: controller.signal,
       cache: "no-store",
@@ -122,8 +203,14 @@ export async function callBinaryTool(tool: ToolApiSlug, formData: FormData): Pro
     const filename =
       parseFilename(response.headers.get("content-disposition")) ??
       `${tool}-${Date.now().toString()}.bin`;
+    const pdfCompression = parsePdfCompressionSummary(response.headers);
 
-    return { blob, contentType, filename };
+    return {
+      blob,
+      contentType,
+      filename,
+      ...(pdfCompression ? { pdfCompression } : {}),
+    };
   } catch (error) {
     if (error instanceof ToolApiError) {
       throw error;

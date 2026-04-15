@@ -4,7 +4,7 @@ import type { CategoryDefinition, ToolDefinition } from "@/lib/tool-registry";
 
 export function getSiteUrl(): string {
   const envUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  return envUrl && envUrl.length > 0 ? envUrl : "http://localhost:3004";
+  return envUrl && envUrl.length > 0 ? envUrl : "http://localhost:4000";
 }
 
 export function toAbsoluteUrl(path: string): string {

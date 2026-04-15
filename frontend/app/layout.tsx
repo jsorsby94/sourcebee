@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 import "@/app/globals.css";
+import { AnalyticsTracker } from "@/components/analytics/analytics-tracker";
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
 import { ThemeProvider } from "@/components/layout/theme-provider";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3004";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:4000";
 const appEnv = process.env.NEXT_PUBLIC_APP_ENV ?? "dev";
 
 export const metadata: Metadata = {
@@ -42,6 +43,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           </div>
         ) : null}
         <ThemeProvider>
+          <AnalyticsTracker />
           <Header />
           <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">{children}</main>
           <Footer />
