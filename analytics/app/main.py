@@ -162,7 +162,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Simple Tools Hub Analytics",
+    title="Sourcebee Analytics",
     docs_url=None,
     redoc_url=None,
     openapi_url=None,
@@ -473,7 +473,7 @@ def dashboard() -> str:
   <head>
     <meta charset=\"utf-8\" />
     <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
-    <title>Simple Tools Hub Analytics Dashboard</title>
+    <title>Sourcebee Analytics Dashboard</title>
     <style>
       :root { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
       body { margin: 0; background: #f8fafc; color: #0f172a; }
@@ -497,7 +497,7 @@ def dashboard() -> str:
   </head>
   <body>
     <div class=\"container\">
-      <h1>Simple Tools Hub Analytics</h1>
+      <h1>Sourcebee Analytics</h1>
       <p class=\"muted\">Internal no-auth dashboard. Sensitive tool payloads are never stored; behavior metadata only.</p>
 
       <div class=\"filters\">

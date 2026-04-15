@@ -1,4 +1,4 @@
-# Simple Tools Hub
+# Sourcebee
 
 Public website of fast, useful, SEO-optimized developer tools.
 

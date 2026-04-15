@@ -15,7 +15,7 @@ export function AdSlot({ label, className }: AdSlotProps) {
   return (
     <aside
       className={cn(
-        "flex min-h-28 items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 text-center text-xs uppercase tracking-wide text-slate-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-400",
+        "flex min-h-28 items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-100/80 px-4 text-center text-xs uppercase tracking-[0.14em] text-slate-500 dark:border-white/15 dark:bg-[#111722]/80 dark:text-slate-400",
         className,
       )}
       aria-label={`${label} ad slot`}

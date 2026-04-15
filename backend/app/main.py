@@ -59,7 +59,7 @@ def create_app() -> FastAPI:
     setup_logging(settings.log_level)
 
     app = FastAPI(
-        title="Simple Tools Hub Backend",
+        title="Sourcebee Backend API",
         docs_url=None if settings.is_production else "/docs",
         redoc_url=None if settings.is_production else "/redoc",
         openapi_url=None if settings.is_production else "/openapi.json",

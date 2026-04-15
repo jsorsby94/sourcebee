@@ -68,6 +68,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     environment:
+      APP_ENV: dev
       NEXT_PUBLIC_APP_ENV: dev
       NEXT_PUBLIC_SITE_URL: http://localhost:4000
       NEXT_PUBLIC_ADS_ENABLED: ${DEV_NEXT_PUBLIC_ADS_ENABLED:-false}
@@ -216,6 +217,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     environment:
+      APP_ENV: prod
       NEXT_PUBLIC_APP_ENV: prod
       NEXT_PUBLIC_SITE_URL: http://localhost:4001
       NEXT_PUBLIC_ADS_ENABLED: ${PROD_NEXT_PUBLIC_ADS_ENABLED:-false}

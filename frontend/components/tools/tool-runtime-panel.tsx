@@ -31,6 +31,9 @@ interface ToolRuntimePanelProps {
   tool: ToolDefinition;
 }
 
+const selectClassName =
+  "mt-1 h-11 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 dark:border-white/15 dark:bg-[#0d131e] dark:text-slate-100";
+
 function formatApiError(error: unknown): string {
   if (error instanceof ToolApiError) {
     return error.message;
@@ -69,7 +72,7 @@ function formatBytes(bytes: number): string {
 
 function PrivacyNote({ text }: { text: string }) {
   return (
-    <p className="rounded-lg bg-teal-50 px-3 py-2 text-xs text-teal-800 dark:bg-teal-900/30 dark:text-teal-200">
+    <p className="rounded-xl border border-brand-500/25 bg-brand-100/40 px-3 py-2 text-xs text-brand-800 dark:bg-brand-500/12 dark:text-brand-200">
       {text}
     </p>
   );
@@ -79,7 +82,7 @@ function BinaryResult({ result, label }: { result: BinaryToolResponse | null; la
   if (!result) return null;
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/50">
+    <div className="rounded-xl border border-slate-200 bg-slate-100/70 p-3 dark:border-white/10 dark:bg-[#0d131e]/75">
       <p className="text-xs text-slate-600 dark:text-slate-300">{label ?? "Result ready"}</p>
       <p className="mt-1 text-sm font-medium text-slate-900 dark:text-slate-100">{result.filename}</p>
       <div className="mt-3">
@@ -99,7 +102,7 @@ export function ToolRuntimePanel({ tool }: ToolRuntimePanelProps) {
   return (
     <Card className="space-y-4 shadow-glow">
       {error ? (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
+        <p className="rounded-xl border border-red-300/45 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-500/40 dark:bg-red-950/35 dark:text-red-300">
           {error}
         </p>
       ) : null}
@@ -148,7 +151,7 @@ function JwtDecoderPanel({ onError, onClearError }: { onError: (message: string)
   return (
     <div className="space-y-4">
       <PrivacyNote text="JWT input is processed only for this request and is never stored." />
-      <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+      <p className="rounded-xl border border-amber-300/45 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-500/40 dark:bg-amber-900/30 dark:text-amber-200">
         JWT decode reads token content only. It does not verify token signature trust.
       </p>
       <Textarea value={token} onChange={(event) => setToken(event.target.value)} placeholder="Paste JWT token" />
@@ -365,7 +368,7 @@ function UnitConverterPanel({ onError, onClearError }: { onError: (message: stri
           <select
             value={category}
             onChange={(event) => onCategoryChange(event.target.value as UnitConverterRequest["category"])}
-            className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+            className={selectClassName}
           >
             {Object.keys(UNITS_BY_CATEGORY).map((key) => (
               <option key={key} value={key}>
@@ -386,7 +389,7 @@ function UnitConverterPanel({ onError, onClearError }: { onError: (message: stri
           <select
             value={fromUnit}
             onChange={(event) => setFromUnit(event.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+            className={selectClassName}
           >
             {units.map((unit) => (
               <option key={unit} value={unit}>
@@ -401,7 +404,7 @@ function UnitConverterPanel({ onError, onClearError }: { onError: (message: stri
           <select
             value={toUnit}
             onChange={(event) => setToUnit(event.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+            className={selectClassName}
           >
             {units.map((unit) => (
               <option key={unit} value={unit}>
@@ -589,7 +592,7 @@ function QrCodePanel({ onError, onClearError }: { onError: (message: string) => 
         <select
           value={format}
           onChange={(event) => setFormat(event.target.value as "png" | "svg")}
-          className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+          className={selectClassName}
         >
           <option value="png">PNG</option>
           <option value="svg">SVG</option>
@@ -600,7 +603,7 @@ function QrCodePanel({ onError, onClearError }: { onError: (message: string) => 
       </Button>
 
       {previewUrl ? (
-        <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+        <div className="rounded-xl border border-slate-200 p-3 dark:border-white/10">
           <img src={previewUrl} alt="Generated QR code preview" className="max-h-64 w-auto" />
         </div>
       ) : null}
@@ -670,7 +673,7 @@ function ImageConverterPanel({ onError, onClearError }: { onError: (message: str
           <select
             value={format}
             onChange={(event) => setFormat(event.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+            className={selectClassName}
           >
             <option value="png">PNG</option>
             <option value="jpeg">JPEG</option>
@@ -691,7 +694,7 @@ function ImageConverterPanel({ onError, onClearError }: { onError: (message: str
       </Button>
 
       {previewUrl ? (
-        <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+        <div className="rounded-xl border border-slate-200 p-3 dark:border-white/10">
           <img src={previewUrl} alt="Converted image preview" className="max-h-72 w-auto" />
         </div>
       ) : null}
@@ -788,7 +791,7 @@ function PdfUtilitiesPanel({ onError, onClearError }: { onError: (message: strin
 
       <BinaryResult result={result} label="PDF result generated" />
       {mode === "compress" && result?.pdfCompression ? (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200">
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900 dark:border-emerald-700/55 dark:bg-emerald-950/25 dark:text-emerald-200">
           <p className="font-semibold">
             Compression saved {formatBytes(result.pdfCompression.savedBytes)} ({result.pdfCompression.savedPercent.toFixed(2)}%)
           </p>
@@ -889,7 +892,7 @@ function PasswordGeneratorPanel({ onError, onClearError }: { onError: (message: 
       </Button>
 
       {result ? (
-        <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/50">
+        <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-100/70 p-3 dark:border-white/10 dark:bg-[#0d131e]/75">
           <ResultHeading>Generated value</ResultHeading>
           <Textarea value={result.value} readOnly className="min-h-[96px]" />
           <Button variant="secondary" onClick={copyPassword}>Copy</Button>
@@ -944,7 +947,10 @@ function ColorConverterPanel({ onError, onClearError }: { onError: (message: str
             { label: "RGB", value: result.rgb },
             { label: "RGBA", value: result.rgba },
           ].map((entry) => (
-            <div key={entry.label} className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-900/50">
+            <div
+              key={entry.label}
+              className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-100/70 p-2 dark:border-white/10 dark:bg-[#0d131e]/75"
+            >
               <p className="text-sm text-slate-700 dark:text-slate-200"><span className="font-semibold">{entry.label}:</span> {entry.value}</p>
               <Button variant="secondary" onClick={() => copyValue(entry.value)}>Copy</Button>
             </div>

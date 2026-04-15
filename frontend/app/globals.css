@@ -3,25 +3,78 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
+  --sb-bg: #0b0f14;
+  --sb-surface: #111722;
+  --sb-surface-strong: #151d2b;
+  --sb-border: rgba(148, 163, 184, 0.24);
+  --sb-text: #e5e7eb;
+  --sb-muted: #94a3b8;
 }
 
-.dark {
-  color-scheme: dark;
+.light {
+  color-scheme: light;
+  --sb-bg: #ffffff;
+  --sb-surface: #f8fafc;
+  --sb-surface-strong: #f1f5f9;
+  --sb-border: rgba(15, 23, 42, 0.12);
+  --sb-text: #0f172a;
+  --sb-muted: #475569;
 }
 
 body {
-  @apply min-h-screen bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
+  min-height: 100vh;
+  background-color: var(--sb-bg);
+  color: var(--sb-text);
   font-family: "Manrope", "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
   background-image:
-    radial-gradient(circle at 10% -20%, rgba(20, 184, 166, 0.18), transparent 30%),
-    radial-gradient(circle at 100% 0%, rgba(14, 165, 233, 0.12), transparent 34%);
+    radial-gradient(circle at 95% -20%, rgba(245, 158, 11, 0.12), transparent 34%),
+    radial-gradient(circle at 0% 0%, rgba(245, 158, 11, 0.06), transparent 30%),
+    linear-gradient(30deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+    linear-gradient(-30deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+  background-size:
+    auto,
+    auto,
+    28px 48px,
+    28px 48px;
+  background-position:
+    center,
+    center,
+    0 0,
+    14px 24px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.light body {
+  background-image:
+    radial-gradient(circle at 95% -20%, rgba(217, 119, 6, 0.1), transparent 34%),
+    radial-gradient(circle at 0% 0%, rgba(217, 119, 6, 0.05), transparent 30%),
+    linear-gradient(30deg, rgba(15, 23, 42, 0.05) 1px, transparent 1px),
+    linear-gradient(-30deg, rgba(15, 23, 42, 0.05) 1px, transparent 1px);
 }
 
 .font-display {
-  font-family: "Space Grotesk", "Manrope", "Avenir Next", "Segoe UI", sans-serif;
+  font-family: "Sora", "Space Grotesk", "Manrope", "Avenir Next", "Segoe UI", sans-serif;
 }
 
 a {
-  @apply outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60;
+  @apply outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60 focus-visible:ring-offset-2;
+}
+
+:focus-visible {
+  outline: none;
+}
+
+.dark :focus-visible {
+  --tw-ring-offset-color: #0b0f14;
+}
+
+.light :focus-visible {
+  --tw-ring-offset-color: #ffffff;
+}
+
+::selection {
+  background: rgba(245, 158, 11, 0.32);
+  color: inherit;
 }

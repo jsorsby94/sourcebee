@@ -27,6 +27,18 @@ export type ToolApiSlug =
   | "color-converter";
 
 export type CategorySlug = "encoding" | "data" | "developer" | "security" | "utilities";
+export type ToolIconKey =
+  | "token"
+  | "base64"
+  | "json"
+  | "units"
+  | "math"
+  | "ssl"
+  | "qr"
+  | "image"
+  | "pdf"
+  | "password"
+  | "color";
 
 export interface ToolFaqItem {
   question: string;
@@ -38,7 +50,9 @@ export interface ToolDefinition {
   apiSlug: ToolApiSlug;
   extraApiSlugs?: ToolApiSlug[];
   name: string;
+  iconKey: ToolIconKey;
   category: CategorySlug;
+  searchKeywords: string[];
   shortDescription: string;
   intro: string;
   explanation: string;
@@ -87,7 +101,9 @@ export const TOOLS: ToolDefinition[] = [
     slug: "jwt-decoder",
     apiSlug: "jwt-decode",
     name: "JWT Decoder",
+    iconKey: "token",
     category: "security",
+    searchKeywords: ["token", "claims", "bearer", "auth", "header", "payload"],
     shortDescription: "Decode JWT header and payload safely with expiration details.",
     intro:
       "Decode JSON Web Tokens quickly to inspect claims, headers, and expiration timestamps during debugging.",
@@ -114,7 +130,9 @@ export const TOOLS: ToolDefinition[] = [
     slug: "base64",
     apiSlug: "base64",
     name: "Base64 Encode/Decode",
+    iconKey: "base64",
     category: "encoding",
+    searchKeywords: ["encode", "decode", "utf8", "string", "payload"],
     shortDescription: "Encode or decode Base64 text with copy-friendly output.",
     intro:
       "Convert plain text to Base64 and decode Base64 back to UTF-8 text with clear validation feedback.",
@@ -139,7 +157,9 @@ export const TOOLS: ToolDefinition[] = [
     slug: "json-formatter",
     apiSlug: "json-formatter",
     name: "JSON Formatter",
+    iconKey: "json",
     category: "data",
+    searchKeywords: ["pretty", "minify", "validate", "parse", "schema"],
     shortDescription: "Pretty print, minify, and validate JSON with helpful errors.",
     intro:
       "Format, validate, and minify JSON in one place to speed up debugging and payload preparation.",
@@ -164,7 +184,9 @@ export const TOOLS: ToolDefinition[] = [
     slug: "unit-converter",
     apiSlug: "unit-converter",
     name: "Unit Converter",
+    iconKey: "units",
     category: "utilities",
+    searchKeywords: ["length", "weight", "temperature", "volume", "speed", "area"],
     shortDescription: "Convert between common length, weight, temperature, volume, speed, and area units.",
     intro:
       "Use accurate unit conversions for engineering estimates, technical writing, and day-to-day calculations.",
@@ -189,7 +211,9 @@ export const TOOLS: ToolDefinition[] = [
     slug: "calculator",
     apiSlug: "calculator",
     name: "Calculator",
+    iconKey: "math",
     category: "developer",
+    searchKeywords: ["arithmetic", "expression", "math", "compute"],
     shortDescription: "Evaluate arithmetic expressions quickly with safe parsing.",
     intro:
       "Run quick arithmetic with strict parsing so unsupported or unsafe expression forms are rejected.",
@@ -214,7 +238,9 @@ export const TOOLS: ToolDefinition[] = [
     slug: "ssl-checker",
     apiSlug: "ssl-checker",
     name: "SSL Certificate Checker",
+    iconKey: "ssl",
     category: "security",
+    searchKeywords: ["tls", "certificate", "issuer", "san", "x509", "expiry"],
     shortDescription: "Check SSL certificate issuer, subject, SANs, and expiration metadata.",
     intro:
       "Inspect TLS certificate details for a hostname with strict SSRF controls and bounded timeouts.",
@@ -240,7 +266,9 @@ export const TOOLS: ToolDefinition[] = [
     slug: "qr-code-generator",
     apiSlug: "qr-code",
     name: "QR Code Generator",
+    iconKey: "qr",
     category: "encoding",
+    searchKeywords: ["qr", "png", "svg", "barcode", "link"],
     shortDescription: "Generate privacy-safe QR codes in PNG or SVG format.",
     intro:
       "Create downloadable QR codes for links, text, Wi-Fi payloads, and app deep links with fast output options.",
@@ -265,7 +293,9 @@ export const TOOLS: ToolDefinition[] = [
     slug: "image-converter",
     apiSlug: "image-converter",
     name: "Image Converter",
+    iconKey: "image",
     category: "utilities",
+    searchKeywords: ["jpg", "png", "webp", "gif", "tiff", "heic"],
     shortDescription: "Convert images between common formats with strict file safety limits.",
     intro:
       "Convert uploaded images to PNG, JPEG, WEBP, GIF, BMP, or TIFF for compatibility across apps and platforms.",
@@ -291,7 +321,9 @@ export const TOOLS: ToolDefinition[] = [
     apiSlug: "pdf-merge",
     extraApiSlugs: ["pdf-split", "pdf-compress"],
     name: "PDF Utilities",
+    iconKey: "pdf",
     category: "data",
+    searchKeywords: ["pdf", "merge", "split", "compress", "pages"],
     shortDescription: "Merge, split, and compress PDFs with strict privacy and limits.",
     intro:
       "Run core PDF operations without accounts or storage: combine multiple PDFs, split ranges, and reduce document size.",
@@ -316,7 +348,9 @@ export const TOOLS: ToolDefinition[] = [
     slug: "password-generator",
     apiSlug: "password-generator",
     name: "Secure Password Generator",
+    iconKey: "password",
     category: "security",
+    searchKeywords: ["password", "passphrase", "entropy", "generator"],
     shortDescription: "Generate strong random passwords or passphrases with policy controls.",
     intro:
       "Create high-entropy passwords for production systems, credentials, and security policy compliance.",
@@ -341,7 +375,9 @@ export const TOOLS: ToolDefinition[] = [
     slug: "color-converter",
     apiSlug: "color-converter",
     name: "Hex to RGB Converter",
+    iconKey: "color",
     category: "developer",
+    searchKeywords: ["hex", "rgb", "rgba", "css", "palette", "alpha"],
     shortDescription: "Convert HEX, HEXA, RGB, and RGBA values instantly.",
     intro:
       "Switch between CSS color formats quickly while preserving alpha values where available.",

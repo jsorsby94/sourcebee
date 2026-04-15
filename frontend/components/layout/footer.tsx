@@ -1,22 +1,26 @@
 import Link from "next/link";
 
+import { BrandMark } from "@/components/layout/brand-mark";
+
 export function Footer() {
   return (
-    <footer className="mt-16 border-t border-slate-200/70 bg-white/80 py-10 dark:border-slate-800 dark:bg-slate-950">
-      <div className="mx-auto grid w-full max-w-6xl gap-6 px-4 sm:px-6 lg:px-8 md:grid-cols-2">
+    <footer className="mt-16 border-t border-slate-200/80 bg-white/70 py-10 dark:border-white/10 dark:bg-[#0b0f14]/75">
+      <div className="mx-auto grid w-full max-w-7xl gap-7 px-4 sm:px-6 lg:px-8 md:grid-cols-2">
         <div>
-          <p className="font-display text-base font-semibold text-slate-900 dark:text-slate-100">Simple Tools Hub</p>
-          <p className="mt-2 max-w-md text-sm text-slate-600 dark:text-slate-300">
-            Fast, practical web tools with security-first defaults, strong SEO foundations, and production-minded architecture.
+          <p className="text-slate-900 dark:text-slate-100">
+            <BrandMark compact />
+          </p>
+          <p className="mt-3 max-w-md text-sm text-slate-600 dark:text-slate-300">
+            Fast, precise developer utilities built for real engineering workflows.
           </p>
           <p className="mt-2 max-w-md text-xs text-slate-500 dark:text-slate-400">
-            Privacy note: tool inputs and generated files/passwords are never stored. We do collect behavior analytics metadata
-            such as IP, routes, and tool usage.
+            Privacy: tool inputs, uploaded files, and generated secrets are never retained. Behavioral metadata is collected for
+            operational analytics.
           </p>
         </div>
         <div className="md:text-right">
-          <p className="text-sm text-slate-600 dark:text-slate-300">Explore</p>
-          <div className="mt-2 flex flex-wrap gap-3 md:justify-end">
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-300">Explore</p>
+          <div className="mt-3 flex flex-wrap gap-3 md:justify-end">
             <Link href="/tools" className="text-sm text-brand-700 hover:underline dark:text-brand-300">
               All tools
             </Link>

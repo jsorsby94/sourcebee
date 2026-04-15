@@ -289,9 +289,7 @@ async def pdf_compress(file: UploadFile = File(...)) -> Response:
     original_bytes = len(content)
     compressed_bytes = len(compressed)
     saved_bytes = max(original_bytes - compressed_bytes, 0)
-    saved_percent = (
-        (saved_bytes / original_bytes) * 100 if original_bytes > 0 else 0.0
-    )
+    saved_percent = (saved_bytes / original_bytes) * 100 if original_bytes > 0 else 0.0
 
     return _binary_response(
         compressed,

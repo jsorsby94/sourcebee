@@ -24,7 +24,7 @@ export function buildToolMetadata(tool: ToolDefinition): Metadata {
       title: tool.seoTitle,
       description: tool.seoDescription,
       url: canonical,
-      siteName: "Simple Tools Hub",
+      siteName: "Sourcebee",
       type: "website",
     },
     twitter: {
@@ -36,8 +36,8 @@ export function buildToolMetadata(tool: ToolDefinition): Metadata {
 }
 
 export function buildCategoryMetadata(category: CategoryDefinition): Metadata {
-  const title = `${category.name} Tools - Simple Tools Hub`;
-  const description = `${category.description} Explore practical ${category.name.toLowerCase()} utilities on Simple Tools Hub.`;
+  const title = `${category.name} Tools`;
+  const description = `${category.description} Explore practical ${category.name.toLowerCase()} developer utilities on Sourcebee.`;
   const canonical = toAbsoluteUrl(`/categories/${category.slug}`);
 
   return {
@@ -50,7 +50,7 @@ export function buildCategoryMetadata(category: CategoryDefinition): Metadata {
       title,
       description,
       url: canonical,
-      siteName: "Simple Tools Hub",
+      siteName: "Sourcebee",
       type: "website",
     },
     twitter: {
@@ -88,7 +88,7 @@ export function buildToolJsonLd(tool: ToolDefinition): Record<string, unknown> {
     isAccessibleForFree: true,
     provider: {
       "@type": "Organization",
-      name: "Simple Tools Hub",
+      name: "Sourcebee",
     },
   };
 }

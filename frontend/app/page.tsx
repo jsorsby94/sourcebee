@@ -2,30 +2,30 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { AdSlot } from "@/components/tools/ad-slot";
-import { Card } from "@/components/ui/card";
+import { ToolCard } from "@/components/tools/tool-card";
 import { CATEGORIES, TOOLS } from "@/lib/tool-registry";
 import { toAbsoluteUrl } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  title: "Simple Tools Hub - Fast, Useful Web Tools",
+  title: "Precision Developer Tools",
   description:
-    "Use practical web tools for JWT decoding, Base64 conversion, JSON formatting, unit conversion, calculations, and SSL certificate checks.",
+    "Sourcebee is a fast, precise hive of developer tools for JWT decode, Base64, JSON formatting, conversion workflows, and security diagnostics.",
   alternates: {
     canonical: toAbsoluteUrl("/"),
   },
   openGraph: {
-    title: "Simple Tools Hub - Fast, Useful Web Tools",
+    title: "Sourcebee - Precision Developer Tools",
     description:
-      "Use practical web tools for JWT decoding, Base64 conversion, JSON formatting, unit conversion, calculations, and SSL certificate checks.",
+      "A high-performance hive of developer tools designed for speed, reliability, and technical precision.",
     url: toAbsoluteUrl("/"),
-    siteName: "Simple Tools Hub",
+    siteName: "Sourcebee",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Simple Tools Hub - Fast, Useful Web Tools",
+    title: "Sourcebee - Precision Developer Tools",
     description:
-      "Use practical web tools for JWT decoding, Base64 conversion, JSON formatting, unit conversion, calculations, and SSL certificate checks.",
+      "A high-performance hive of developer tools designed for speed, reliability, and technical precision.",
   },
 };
 
@@ -34,25 +34,25 @@ export default function HomePage() {
 
   return (
     <div className="space-y-12">
-      <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-10">
-        <div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-brand-200/70 blur-3xl dark:bg-brand-800/40" />
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-700 dark:text-brand-300">Public developer tools</p>
-        <h1 className="font-display mt-3 max-w-3xl text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-50 sm:text-5xl">
-          Fast, practical tools for everyday engineering workflows.
+      <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white/90 p-7 shadow-sm dark:border-white/10 dark:bg-[#111722]/90 sm:p-10">
+        <div className="absolute -right-16 -top-16 h-52 w-52 rounded-full bg-brand-400/14 blur-3xl" />
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-700 dark:text-brand-300">Developer platform</p>
+        <h1 className="font-display mt-3 max-w-4xl text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-50 sm:text-5xl">
+          Sourcebee is a precision hive of developer tools built for real work.
         </h1>
-        <p className="mt-4 max-w-2xl text-base text-slate-600 dark:text-slate-300">
-          Simple Tools Hub is built for speed, safety, and discoverability. Every tool has dedicated SEO content, strong
-          validation, and production-minded architecture.
+        <p className="mt-4 max-w-3xl text-sm text-slate-600 dark:text-slate-300 sm:text-base">
+          Fast execution, strict validation, and consistent interfaces across every tool. No clutter. No gimmicks. Just reliable
+          utilities for engineering workflows.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
-          <Link href="/tools" className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-700">
-            Browse all tools
+          <Link href="/tools" className="rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-brand-400">
+            Browse tools
           </Link>
           <Link
             href="/categories/security"
-            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
           >
-            Explore security tools
+            Open security tools
           </Link>
         </div>
       </section>
@@ -62,22 +62,15 @@ export default function HomePage() {
       <section aria-labelledby="featured-tools" className="space-y-4">
         <div className="flex items-end justify-between">
           <h2 id="featured-tools" className="font-display text-2xl font-semibold text-slate-900 dark:text-slate-100">
-            Featured tools
+            Featured Tools
           </h2>
-          <Link href="/tools" className="text-sm font-medium text-brand-700 hover:underline dark:text-brand-300">
+          <Link href="/tools" className="text-sm font-semibold text-brand-700 hover:underline dark:text-brand-300">
             View all
           </Link>
         </div>
-
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {featuredTools.map((tool) => (
-            <Card key={tool.slug} className="group">
-              <p className="text-xs font-semibold uppercase tracking-wide text-brand-700 dark:text-brand-300">{tool.category}</p>
-              <h3 className="mt-2 text-lg font-semibold text-slate-900 transition group-hover:text-brand-700 dark:text-slate-100 dark:group-hover:text-brand-300">
-                <Link href={`/tools/${tool.slug}`}>{tool.name}</Link>
-              </h3>
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{tool.shortDescription}</p>
-            </Card>
+            <ToolCard key={tool.slug} tool={tool} featured />
           ))}
         </div>
       </section>
@@ -86,15 +79,18 @@ export default function HomePage() {
         <h2 id="tool-categories" className="font-display text-2xl font-semibold text-slate-900 dark:text-slate-100">
           Categories
         </h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {CATEGORIES.map((category) => (
-            <Card key={category.slug}>
+            <article
+              key={category.slug}
+              className="rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm dark:border-white/10 dark:bg-[#111722]/90"
+            >
               <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{category.name}</h3>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{category.description}</p>
-              <Link href={`/categories/${category.slug}`} className="mt-4 inline-block text-sm font-medium text-brand-700 hover:underline dark:text-brand-300">
+              <Link href={`/categories/${category.slug}`} className="mt-4 inline-block text-sm font-semibold text-brand-700 hover:underline dark:text-brand-300">
                 Explore {category.name.toLowerCase()}
               </Link>
-            </Card>
+            </article>
           ))}
         </div>
       </section>
