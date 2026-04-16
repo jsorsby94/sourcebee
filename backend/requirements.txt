@@ -10,3 +10,4 @@ qrcode==7.4.2
 Pillow==10.4.0
 pillow-heif==0.20.0
 pypdf==4.3.1
+PyYAML==6.0.2

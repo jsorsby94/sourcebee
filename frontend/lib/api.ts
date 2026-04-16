@@ -246,6 +246,61 @@ export interface Base64Response {
   output: string;
 }
 
+export interface JsonYamlRequest {
+  mode: "json-to-yaml" | "yaml-to-json";
+  input: string;
+  sort_keys: boolean;
+}
+
+export interface JsonYamlResponse {
+  mode: "json-to-yaml" | "yaml-to-json";
+  output: string;
+}
+
+export interface HashGeneratorRequest {
+  algorithm: "md5" | "sha1" | "sha224" | "sha256" | "sha384" | "sha512";
+  input: string;
+}
+
+export interface HashGeneratorResponse {
+  algorithm: "md5" | "sha1" | "sha224" | "sha256" | "sha384" | "sha512";
+  input_length: number;
+  digest: string;
+}
+
+export interface UUIDGeneratorRequest {
+  count: number;
+  uppercase: boolean;
+  remove_hyphens: boolean;
+}
+
+export interface UUIDGeneratorResponse {
+  count: number;
+  uuids: string[];
+}
+
+export interface URLCodecRequest {
+  mode: "encode" | "decode";
+  input: string;
+}
+
+export interface URLCodecResponse {
+  mode: "encode" | "decode";
+  output: string;
+}
+
+export interface TimestampConverterRequest {
+  input: string;
+}
+
+export interface TimestampConverterResponse {
+  input: string;
+  detected_type: "unix_seconds" | "unix_milliseconds" | "iso_datetime";
+  unix_seconds: number;
+  unix_milliseconds: number;
+  iso_utc: string;
+}
+
 export interface JsonFormatterRequest {
   operation: "pretty" | "minify" | "validate";
   input: string;
@@ -256,6 +311,27 @@ export interface JsonFormatterResponse {
   operation: "pretty" | "minify" | "validate";
   valid: boolean;
   output: string | null;
+}
+
+export interface CronToolRequest {
+  mode: "parse" | "generate";
+  expression?: string;
+  minute?: string;
+  hour?: string;
+  day_of_month?: string;
+  month?: string;
+  day_of_week?: string;
+}
+
+export interface CronToolResponse {
+  mode: "parse" | "generate";
+  expression: string;
+  description: string;
+  minute: string;
+  hour: string;
+  day_of_month: string;
+  month: string;
+  day_of_week: string;
 }
 
 export interface UnitConverterRequest {
@@ -271,15 +347,6 @@ export interface UnitConverterResponse {
   from_unit: string;
   to_unit: string;
   output_value: number;
-}
-
-export interface CalculatorRequest {
-  expression: string;
-}
-
-export interface CalculatorResponse {
-  expression: string;
-  result: number;
 }
 
 export interface SslCheckerRequest {
@@ -330,12 +397,21 @@ export interface ColorConverterResponse {
 export const toolsApi = {
   jwtDecode: (payload: JwtDecodeRequest) => callTool<JwtDecodeRequest, JwtDecodeResponse>("jwt-decode", payload),
   base64: (payload: Base64Request) => callTool<Base64Request, Base64Response>("base64", payload),
+  jsonYaml: (payload: JsonYamlRequest) => callTool<JsonYamlRequest, JsonYamlResponse>("json-yaml", payload),
+  hashGenerator: (payload: HashGeneratorRequest) =>
+    callTool<HashGeneratorRequest, HashGeneratorResponse>("hash-generator", payload),
+  uuidGenerator: (payload: UUIDGeneratorRequest) =>
+    callTool<UUIDGeneratorRequest, UUIDGeneratorResponse>("uuid-generator", payload),
+  urlEncoderDecoder: (payload: URLCodecRequest) =>
+    callTool<URLCodecRequest, URLCodecResponse>("url-encoder-decoder", payload),
+  timestampConverter: (payload: TimestampConverterRequest) =>
+    callTool<TimestampConverterRequest, TimestampConverterResponse>("timestamp-converter", payload),
   jsonFormatter: (payload: JsonFormatterRequest) =>
     callTool<JsonFormatterRequest, JsonFormatterResponse>("json-formatter", payload),
+  cronParserGenerator: (payload: CronToolRequest) =>
+    callTool<CronToolRequest, CronToolResponse>("cron-parser-generator", payload),
   unitConverter: (payload: UnitConverterRequest) =>
     callTool<UnitConverterRequest, UnitConverterResponse>("unit-converter", payload),
-  calculator: (payload: CalculatorRequest) =>
-    callTool<CalculatorRequest, CalculatorResponse>("calculator", payload),
   sslChecker: (payload: SslCheckerRequest) =>
     callTool<SslCheckerRequest, SslCheckerResponse>("ssl-checker", payload),
   passwordGenerator: (payload: PasswordGeneratorRequest) =>

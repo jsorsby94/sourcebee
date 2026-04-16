@@ -16,6 +16,18 @@ function iconGlyph(iconKey: ToolDefinition["iconKey"]): string {
       return "JW";
     case "base64":
       return "64";
+    case "yaml":
+      return "YML";
+    case "hash":
+      return "SHA";
+    case "uuid":
+      return "UID";
+    case "url":
+      return "URL";
+    case "time":
+      return "UTC";
+    case "cron":
+      return "CRN";
     case "json":
       return "{}";
     case "units":

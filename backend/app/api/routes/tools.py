@@ -9,10 +9,14 @@ from app.core.redis import get_redis_from_request
 from app.schemas.tools import (
     Base64Request,
     Base64Response,
-    CalculatorRequest,
-    CalculatorResponse,
+    CronToolRequest,
+    CronToolResponse,
     ColorConverterRequest,
     ColorConverterResponse,
+    HashGeneratorRequest,
+    HashGeneratorResponse,
+    JSONYAMLRequest,
+    JSONYAMLResponse,
     JSONFormatterRequest,
     JSONFormatterResponse,
     JWTDecodeRequest,
@@ -21,20 +25,31 @@ from app.schemas.tools import (
     PasswordGeneratorResponse,
     SSLCheckerRequest,
     SSLCheckerResponse,
+    TimestampConverterRequest,
+    TimestampConverterResponse,
+    URLCodecRequest,
+    URLCodecResponse,
+    UUIDGeneratorRequest,
+    UUIDGeneratorResponse,
     UnitConverterRequest,
     UnitConverterResponse,
 )
 from app.services.base64 import run_base64
-from app.services.calculator import calculate
+from app.services.cron_tools import run_cron_tool
 from app.services.color_converter import convert_color
+from app.services.hash_generator import generate_hash
 from app.services.image_converter import convert_image
+from app.services.json_yaml import convert_json_yaml
 from app.services.json_tools import format_json
 from app.services.jwt import decode_jwt
 from app.services.password_generator import generate_password
 from app.services.pdf_utils import compress_pdf, merge_pdfs, split_pdf
 from app.services.qr_code import generate_qr_code
 from app.services.ssl_checker import check_ssl_certificate
+from app.services.timestamp_converter import convert_timestamp
 from app.services.units import convert_units
+from app.services.url_codec import run_url_codec
+from app.services.uuid_generator import generate_uuids
 
 router = APIRouter(prefix="/tools", tags=["tools"])
 
@@ -126,6 +141,59 @@ async def base64_handler(payload: Base64Request) -> Base64Response:
 
 
 @router.post(
+    "/json-yaml",
+    response_model=JSONYAMLResponse,
+    dependencies=[Depends(rate_limit_dependency("json-yaml"))],
+)
+async def json_yaml(payload: JSONYAMLRequest) -> JSONYAMLResponse:
+    return JSONYAMLResponse(
+        **convert_json_yaml(payload.mode, payload.input, payload.sort_keys)
+    )
+
+
+@router.post(
+    "/hash-generator",
+    response_model=HashGeneratorResponse,
+    dependencies=[Depends(rate_limit_dependency("hash-generator"))],
+)
+async def hash_generator(payload: HashGeneratorRequest) -> HashGeneratorResponse:
+    return HashGeneratorResponse(
+        **generate_hash(payload.algorithm, payload.input)
+    )
+
+
+@router.post(
+    "/uuid-generator",
+    response_model=UUIDGeneratorResponse,
+    dependencies=[Depends(rate_limit_dependency("uuid-generator"))],
+)
+async def uuid_generator(payload: UUIDGeneratorRequest) -> UUIDGeneratorResponse:
+    return UUIDGeneratorResponse(
+        **generate_uuids(payload.count, payload.uppercase, payload.remove_hyphens)
+    )
+
+
+@router.post(
+    "/url-encoder-decoder",
+    response_model=URLCodecResponse,
+    dependencies=[Depends(rate_limit_dependency("url-encoder-decoder"))],
+)
+async def url_encoder_decoder(payload: URLCodecRequest) -> URLCodecResponse:
+    return URLCodecResponse(**run_url_codec(payload.mode, payload.input))
+
+
+@router.post(
+    "/timestamp-converter",
+    response_model=TimestampConverterResponse,
+    dependencies=[Depends(rate_limit_dependency("timestamp-converter"))],
+)
+async def timestamp_converter(
+    payload: TimestampConverterRequest,
+) -> TimestampConverterResponse:
+    return TimestampConverterResponse(**convert_timestamp(payload.input))
+
+
+@router.post(
     "/json-formatter",
     response_model=JSONFormatterResponse,
     dependencies=[Depends(rate_limit_dependency("json-formatter"))],
@@ -133,6 +201,25 @@ async def base64_handler(payload: Base64Request) -> Base64Response:
 async def json_formatter(payload: JSONFormatterRequest) -> JSONFormatterResponse:
     return JSONFormatterResponse(
         **format_json(payload.operation, payload.input, payload.sort_keys)
+    )
+
+
+@router.post(
+    "/cron-parser-generator",
+    response_model=CronToolResponse,
+    dependencies=[Depends(rate_limit_dependency("cron-parser-generator"))],
+)
+async def cron_parser_generator(payload: CronToolRequest) -> CronToolResponse:
+    return CronToolResponse(
+        **run_cron_tool(
+            payload.mode,
+            payload.expression,
+            payload.minute,
+            payload.hour,
+            payload.day_of_month,
+            payload.month,
+            payload.day_of_week,
+        )
     )
 
 
@@ -147,15 +234,6 @@ async def unit_converter(payload: UnitConverterRequest) -> UnitConverterResponse
             payload.category, payload.value, payload.from_unit, payload.to_unit
         )
     )
-
-
-@router.post(
-    "/calculator",
-    response_model=CalculatorResponse,
-    dependencies=[Depends(rate_limit_dependency("calculator"))],
-)
-async def calculator(payload: CalculatorRequest) -> CalculatorResponse:
-    return CalculatorResponse(**calculate(payload.expression))
 
 
 @router.post(

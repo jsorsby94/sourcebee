@@ -12,16 +12,21 @@ import {
   toolsApi,
   type Base64Response,
   type BinaryToolResponse,
-  type CalculatorResponse,
   type ColorConverterResponse,
+  type CronToolResponse,
+  type HashGeneratorRequest,
+  type HashGeneratorResponse,
+  type JsonYamlResponse,
   type JsonFormatterResponse,
   type JwtDecodeResponse,
   type PasswordGeneratorResponse,
   type SslCheckerResponse,
+  type TimestampConverterResponse,
+  type URLCodecResponse,
+  type UUIDGeneratorResponse,
   type UnitConverterRequest,
   type UnitConverterResponse,
 } from "@/lib/api";
-import { sanitizeExpression } from "@/lib/tool-engines/calculator";
 import { formatJwtDate } from "@/lib/tool-engines/jwt";
 import { UNITS_BY_CATEGORY } from "@/lib/tool-engines/units";
 import type { ToolDefinition } from "@/lib/tool-registry";
@@ -109,9 +114,14 @@ export function ToolRuntimePanel({ tool }: ToolRuntimePanelProps) {
 
       {tool.slug === "jwt-decoder" && <JwtDecoderPanel onError={setError} onClearError={clearError} />}
       {tool.slug === "base64" && <Base64Panel onError={setError} onClearError={clearError} />}
+      {tool.slug === "json-yaml" && <JsonYamlPanel onError={setError} onClearError={clearError} />}
+      {tool.slug === "hash-generator" && <HashGeneratorPanel onError={setError} onClearError={clearError} />}
+      {tool.slug === "uuid-generator" && <UuidGeneratorPanel onError={setError} onClearError={clearError} />}
+      {tool.slug === "url-encoder-decoder" && <UrlCodecPanel onError={setError} onClearError={clearError} />}
+      {tool.slug === "timestamp-converter" && <TimestampConverterPanel onError={setError} onClearError={clearError} />}
       {tool.slug === "json-formatter" && <JsonFormatterPanel onError={setError} onClearError={clearError} />}
+      {tool.slug === "cron-parser-generator" && <CronParserGeneratorPanel onError={setError} onClearError={clearError} />}
       {tool.slug === "unit-converter" && <UnitConverterPanel onError={setError} onClearError={clearError} />}
-      {tool.slug === "calculator" && <CalculatorPanel onError={setError} onClearError={clearError} />}
       {tool.slug === "ssl-checker" && <SslCheckerPanel onError={setError} onClearError={clearError} />}
       {tool.slug === "qr-code-generator" && <QrCodePanel onError={setError} onClearError={clearError} />}
       {tool.slug === "image-converter" && <ImageConverterPanel onError={setError} onClearError={clearError} />}
@@ -244,6 +254,357 @@ function Base64Panel({ onError, onClearError }: { onError: (message: string) => 
   );
 }
 
+function JsonYamlPanel({ onError, onClearError }: { onError: (message: string) => void; onClearError: () => void }) {
+  const [mode, setMode] = useState<"json-to-yaml" | "yaml-to-json">("json-to-yaml");
+  const [sortKeys, setSortKeys] = useState(false);
+  const [input, setInput] = useState('{"hello":"world","count":2}');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<JsonYamlResponse | null>(null);
+
+  async function handleRun() {
+    const validation = validateRequiredText(input, "Input");
+    if (validation) {
+      onError(validation);
+      return;
+    }
+
+    onClearError();
+    setLoading(true);
+    setResult(null);
+
+    try {
+      const response = await toolsApi.jsonYaml({ mode, input, sort_keys: sortKeys });
+      setResult(response);
+    } catch (error) {
+      onError(formatApiError(error));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function copyOutput() {
+    if (!result?.output) return;
+    await navigator.clipboard.writeText(result.output);
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-2">
+        <Button variant={mode === "json-to-yaml" ? "primary" : "secondary"} onClick={() => setMode("json-to-yaml")}>
+          JSON to YAML
+        </Button>
+        <Button variant={mode === "yaml-to-json" ? "primary" : "secondary"} onClick={() => setMode("yaml-to-json")}>
+          YAML to JSON
+        </Button>
+      </div>
+      <label className="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+        <input type="checkbox" checked={sortKeys} onChange={(event) => setSortKeys(event.target.checked)} />
+        Sort keys
+      </label>
+      <Textarea
+        value={input}
+        onChange={(event) => setInput(event.target.value)}
+        placeholder={mode === "json-to-yaml" ? "Paste JSON" : "Paste YAML"}
+      />
+      <Button onClick={handleRun} disabled={loading}>
+        {loading ? "Converting..." : mode === "json-to-yaml" ? "Convert to YAML" : "Convert to JSON"}
+      </Button>
+
+      {result ? (
+        <div className="space-y-2">
+          <ResultHeading>Output</ResultHeading>
+          <Textarea value={result.output} readOnly className="min-h-[180px]" />
+          <Button variant="secondary" onClick={copyOutput}>
+            Copy output
+          </Button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function HashGeneratorPanel({ onError, onClearError }: { onError: (message: string) => void; onClearError: () => void }) {
+  const [algorithm, setAlgorithm] = useState<HashGeneratorRequest["algorithm"]>("sha256");
+  const [input, setInput] = useState("hello");
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<HashGeneratorResponse | null>(null);
+
+  async function handleGenerate() {
+    onClearError();
+    setLoading(true);
+    setResult(null);
+
+    try {
+      const response = await toolsApi.hashGenerator({ algorithm, input });
+      setResult(response);
+    } catch (error) {
+      onError(formatApiError(error));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function copyDigest() {
+    if (!result?.digest) return;
+    await navigator.clipboard.writeText(result.digest);
+  }
+
+  return (
+    <div className="space-y-4">
+      <label className="text-sm text-slate-700 dark:text-slate-300">
+        Algorithm
+        <select
+          value={algorithm}
+          onChange={(event) => setAlgorithm(event.target.value as HashGeneratorRequest["algorithm"])}
+          className={selectClassName}
+        >
+          <option value="md5">MD5</option>
+          <option value="sha1">SHA-1</option>
+          <option value="sha224">SHA-224</option>
+          <option value="sha256">SHA-256</option>
+          <option value="sha384">SHA-384</option>
+          <option value="sha512">SHA-512</option>
+        </select>
+      </label>
+      <Textarea value={input} onChange={(event) => setInput(event.target.value)} placeholder="Text to hash" />
+      <Button onClick={handleGenerate} disabled={loading}>
+        {loading ? "Hashing..." : "Generate hash"}
+      </Button>
+
+      {result ? (
+        <div className="space-y-2">
+          <ResultHeading>Digest</ResultHeading>
+          <Textarea value={result.digest} readOnly className="min-h-[96px]" />
+          <p className="text-xs text-slate-600 dark:text-slate-300">Input length: {result.input_length} characters</p>
+          <Button variant="secondary" onClick={copyDigest}>
+            Copy digest
+          </Button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function UuidGeneratorPanel({ onError, onClearError }: { onError: (message: string) => void; onClearError: () => void }) {
+  const [count, setCount] = useState("1");
+  const [uppercase, setUppercase] = useState(false);
+  const [removeHyphens, setRemoveHyphens] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<UUIDGeneratorResponse | null>(null);
+
+  async function handleGenerate() {
+    const parsedCount = Number.parseInt(count, 10);
+    if (!Number.isFinite(parsedCount) || parsedCount < 1 || parsedCount > 100) {
+      onError("Count must be an integer between 1 and 100.");
+      return;
+    }
+
+    onClearError();
+    setLoading(true);
+    setResult(null);
+
+    try {
+      const response = await toolsApi.uuidGenerator({
+        count: parsedCount,
+        uppercase,
+        remove_hyphens: removeHyphens,
+      });
+      setResult(response);
+    } catch (error) {
+      onError(formatApiError(error));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function copyAll() {
+    if (!result?.uuids.length) return;
+    await navigator.clipboard.writeText(result.uuids.join("\n"));
+  }
+
+  return (
+    <div className="space-y-4">
+      <label className="text-sm text-slate-700 dark:text-slate-300">
+        Count
+        <Input value={count} onChange={(event) => setCount(event.target.value)} />
+      </label>
+      <div className="grid gap-2 text-sm text-slate-700 dark:text-slate-300 sm:grid-cols-2">
+        <label className="inline-flex items-center gap-2">
+          <input type="checkbox" checked={uppercase} onChange={(event) => setUppercase(event.target.checked)} />
+          Uppercase
+        </label>
+        <label className="inline-flex items-center gap-2">
+          <input type="checkbox" checked={removeHyphens} onChange={(event) => setRemoveHyphens(event.target.checked)} />
+          Remove hyphens
+        </label>
+      </div>
+      <Button onClick={handleGenerate} disabled={loading}>
+        {loading ? "Generating..." : "Generate UUIDs"}
+      </Button>
+
+      {result ? (
+        <div className="space-y-2">
+          <ResultHeading>UUIDs</ResultHeading>
+          <Textarea value={result.uuids.join("\n")} readOnly className="min-h-[160px]" />
+          <Button variant="secondary" onClick={copyAll}>
+            Copy all
+          </Button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function UrlCodecPanel({ onError, onClearError }: { onError: (message: string) => void; onClearError: () => void }) {
+  const [mode, setMode] = useState<"encode" | "decode">("encode");
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<URLCodecResponse | null>(null);
+
+  async function handleRun() {
+    onClearError();
+    setLoading(true);
+    setResult(null);
+
+    try {
+      const response = await toolsApi.urlEncoderDecoder({ mode, input });
+      setResult(response);
+    } catch (error) {
+      onError(formatApiError(error));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function copyOutput() {
+    if (!result?.output) return;
+    await navigator.clipboard.writeText(result.output);
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-2">
+        <Button variant={mode === "encode" ? "primary" : "secondary"} onClick={() => setMode("encode")}>
+          Encode
+        </Button>
+        <Button variant={mode === "decode" ? "primary" : "secondary"} onClick={() => setMode("decode")}>
+          Decode
+        </Button>
+      </div>
+      <Textarea
+        value={input}
+        onChange={(event) => setInput(event.target.value)}
+        placeholder={mode === "encode" ? "Text to URL-encode" : "URL-encoded text to decode"}
+      />
+      <Button onClick={handleRun} disabled={loading}>
+        {loading ? "Running..." : mode === "encode" ? "Encode URL text" : "Decode URL text"}
+      </Button>
+
+      {result ? (
+        <div className="space-y-2">
+          <ResultHeading>Output</ResultHeading>
+          <Textarea value={result.output} readOnly className="min-h-[120px]" />
+          <Button variant="secondary" onClick={copyOutput}>
+            Copy output
+          </Button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function TimestampConverterPanel({ onError, onClearError }: { onError: (message: string) => void; onClearError: () => void }) {
+  const [input, setInput] = useState(() => Math.floor(Date.now() / 1000).toString());
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<TimestampConverterResponse | null>(null);
+
+  async function handleConvert() {
+    const validation = validateRequiredText(input, "Timestamp input");
+    if (validation) {
+      onError(validation);
+      return;
+    }
+
+    onClearError();
+    setLoading(true);
+    setResult(null);
+
+    try {
+      const response = await toolsApi.timestampConverter({ input });
+      setResult(response);
+    } catch (error) {
+      onError(formatApiError(error));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function copyValue(value: string) {
+    await navigator.clipboard.writeText(value);
+  }
+
+  function setNowSeconds() {
+    setInput(Math.floor(Date.now() / 1000).toString());
+  }
+
+  function setNowMilliseconds() {
+    setInput(Date.now().toString());
+  }
+
+  function setNowIso() {
+    setInput(new Date().toISOString());
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-2">
+        <Button variant="secondary" onClick={setNowSeconds}>
+          Now (seconds)
+        </Button>
+        <Button variant="secondary" onClick={setNowMilliseconds}>
+          Now (milliseconds)
+        </Button>
+        <Button variant="secondary" onClick={setNowIso}>
+          Now (ISO)
+        </Button>
+      </div>
+      <Input
+        value={input}
+        onChange={(event) => setInput(event.target.value)}
+        placeholder="Unix seconds/ms or ISO datetime"
+      />
+      <Button onClick={handleConvert} disabled={loading}>
+        {loading ? "Converting..." : "Convert timestamp"}
+      </Button>
+
+      {result ? (
+        <div className="space-y-2">
+          <p className="text-sm text-slate-700 dark:text-slate-200">
+            <span className="font-semibold">Detected type:</span> {result.detected_type}
+          </p>
+          {[
+            { label: "ISO UTC", value: result.iso_utc },
+            { label: "Unix seconds", value: String(result.unix_seconds) },
+            { label: "Unix milliseconds", value: String(result.unix_milliseconds) },
+          ].map((entry) => (
+            <div
+              key={entry.label}
+              className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-100/70 p-2 dark:border-white/10 dark:bg-[#0d131e]/75"
+            >
+              <p className="text-sm text-slate-700 dark:text-slate-200">
+                <span className="font-semibold">{entry.label}:</span> {entry.value}
+              </p>
+              <Button variant="secondary" onClick={() => copyValue(entry.value)}>
+                Copy
+              </Button>
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function JsonFormatterPanel({ onError, onClearError }: { onError: (message: string) => void; onClearError: () => void }) {
   const [operation, setOperation] = useState<"pretty" | "minify" | "validate">("pretty");
   const [sortKeys, setSortKeys] = useState(false);
@@ -311,6 +672,160 @@ function JsonFormatterPanel({ onError, onClearError }: { onError: (message: stri
               Copy output
             </Button>
           ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function CronParserGeneratorPanel({ onError, onClearError }: { onError: (message: string) => void; onClearError: () => void }) {
+  const [mode, setMode] = useState<"parse" | "generate">("parse");
+  const [expression, setExpression] = useState("*/15 9-17 * * 1-5");
+  const [minute, setMinute] = useState("*");
+  const [hour, setHour] = useState("*");
+  const [dayOfMonth, setDayOfMonth] = useState("*");
+  const [month, setMonth] = useState("*");
+  const [dayOfWeek, setDayOfWeek] = useState("*");
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<CronToolResponse | null>(null);
+
+  async function handleRun() {
+    onClearError();
+    setLoading(true);
+    setResult(null);
+
+    try {
+      if (mode === "parse") {
+        const validation = validateRequiredText(expression, "Cron expression");
+        if (validation) {
+          onError(validation);
+          return;
+        }
+
+        const response = await toolsApi.cronParserGenerator({
+          mode: "parse",
+          expression,
+        });
+        setResult(response);
+        return;
+      }
+
+      const fields = [
+        { value: minute, label: "Minute" },
+        { value: hour, label: "Hour" },
+        { value: dayOfMonth, label: "Day of month" },
+        { value: month, label: "Month" },
+        { value: dayOfWeek, label: "Day of week" },
+      ];
+      for (const field of fields) {
+        if (!field.value.trim()) {
+          onError(`${field.label} field is required.`);
+          return;
+        }
+      }
+
+      const response = await toolsApi.cronParserGenerator({
+        mode: "generate",
+        minute,
+        hour,
+        day_of_month: dayOfMonth,
+        month,
+        day_of_week: dayOfWeek,
+      });
+      setResult(response);
+    } catch (error) {
+      onError(formatApiError(error));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function copyExpression() {
+    if (!result?.expression) return;
+    await navigator.clipboard.writeText(result.expression);
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-2">
+        <Button variant={mode === "parse" ? "primary" : "secondary"} onClick={() => setMode("parse")}>
+          Parse
+        </Button>
+        <Button variant={mode === "generate" ? "primary" : "secondary"} onClick={() => setMode("generate")}>
+          Generate
+        </Button>
+      </div>
+
+      {mode === "parse" ? (
+        <Input
+          value={expression}
+          onChange={(event) => setExpression(event.target.value)}
+          placeholder="*/15 9-17 * * 1-5"
+        />
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="text-sm text-slate-700 dark:text-slate-300">
+            Minute
+            <Input value={minute} onChange={(event) => setMinute(event.target.value)} placeholder="*" />
+          </label>
+          <label className="text-sm text-slate-700 dark:text-slate-300">
+            Hour
+            <Input value={hour} onChange={(event) => setHour(event.target.value)} placeholder="*" />
+          </label>
+          <label className="text-sm text-slate-700 dark:text-slate-300">
+            Day of month
+            <Input value={dayOfMonth} onChange={(event) => setDayOfMonth(event.target.value)} placeholder="*" />
+          </label>
+          <label className="text-sm text-slate-700 dark:text-slate-300">
+            Month
+            <Input value={month} onChange={(event) => setMonth(event.target.value)} placeholder="*" />
+          </label>
+          <label className="text-sm text-slate-700 dark:text-slate-300 sm:col-span-2">
+            Day of week
+            <Input value={dayOfWeek} onChange={(event) => setDayOfWeek(event.target.value)} placeholder="*" />
+          </label>
+        </div>
+      )}
+
+      <Button onClick={handleRun} disabled={loading}>
+        {loading ? "Processing..." : mode === "parse" ? "Parse cron expression" : "Generate cron expression"}
+      </Button>
+
+      {result ? (
+        <div className="space-y-2">
+          <div className="rounded-xl border border-slate-200 bg-slate-100/70 p-3 dark:border-white/10 dark:bg-[#0d131e]/75">
+            <p className="text-sm text-slate-700 dark:text-slate-200">
+              <span className="font-semibold">Expression:</span> {result.expression}
+            </p>
+            <p className="mt-1 text-sm text-slate-700 dark:text-slate-200">{result.description}</p>
+            <div className="mt-2">
+              <Button variant="secondary" onClick={copyExpression}>
+                Copy expression
+              </Button>
+            </div>
+          </div>
+          <dl className="grid gap-2 text-sm text-slate-700 dark:text-slate-200 sm:grid-cols-2">
+            <div>
+              <dt className="font-semibold">Minute</dt>
+              <dd>{result.minute}</dd>
+            </div>
+            <div>
+              <dt className="font-semibold">Hour</dt>
+              <dd>{result.hour}</dd>
+            </div>
+            <div>
+              <dt className="font-semibold">Day of month</dt>
+              <dd>{result.day_of_month}</dd>
+            </div>
+            <div>
+              <dt className="font-semibold">Month</dt>
+              <dd>{result.month}</dd>
+            </div>
+            <div className="sm:col-span-2">
+              <dt className="font-semibold">Day of week</dt>
+              <dd>{result.day_of_week}</dd>
+            </div>
+          </dl>
         </div>
       ) : null}
     </div>
@@ -423,50 +938,6 @@ function UnitConverterPanel({ onError, onClearError }: { onError: (message: stri
         <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
           {result.input_value} {result.from_unit} = {result.output_value} {result.to_unit}
         </p>
-      ) : null}
-    </div>
-  );
-}
-
-function CalculatorPanel({ onError, onClearError }: { onError: (message: string) => void; onClearError: () => void }) {
-  const [expression, setExpression] = useState("(2 + 3) * 4");
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<CalculatorResponse | null>(null);
-
-  async function handleCalculate() {
-    const cleaned = sanitizeExpression(expression);
-    if (!cleaned) {
-      onError("Expression is required.");
-      return;
-    }
-
-    onClearError();
-    setLoading(true);
-    setResult(null);
-
-    try {
-      const response = await toolsApi.calculator({ expression: cleaned });
-      setResult(response);
-    } catch (error) {
-      onError(formatApiError(error));
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <div className="space-y-4">
-      <Input
-        value={expression}
-        onChange={(event) => setExpression(event.target.value)}
-        placeholder="Type arithmetic expression"
-      />
-      <Button onClick={handleCalculate} disabled={loading}>
-        {loading ? "Calculating..." : "Calculate"}
-      </Button>
-
-      {result ? (
-        <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">Result: {result.result}</p>
       ) : null}
     </div>
   );

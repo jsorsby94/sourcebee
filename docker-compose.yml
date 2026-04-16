@@ -16,7 +16,7 @@ services:
 
   backend-dev:
     profiles: ["dev"]
-    image: simple-tools-hub-backend-dev
+    image: sourcebee-backend-dev
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -63,7 +63,7 @@ services:
 
   frontend-dev:
     profiles: ["dev"]
-    image: simple-tools-hub-frontend-dev
+    image: sourcebee-frontend-dev
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -115,7 +115,7 @@ services:
 
   analytics-dev:
     profiles: ["dev"]
-    image: simple-tools-hub-analytics-dev
+    image: sourcebee-analytics-dev
     build:
       context: ./analytics
       dockerfile: Dockerfile
@@ -165,7 +165,7 @@ services:
 
   backend-prod:
     profiles: ["prod"]
-    image: simple-tools-hub-backend-prod
+    image: sourcebee-backend-prod
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -212,7 +212,7 @@ services:
 
   frontend-prod:
     profiles: ["prod"]
-    image: simple-tools-hub-frontend-prod
+    image: sourcebee-frontend-prod
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -264,7 +264,7 @@ services:
 
   analytics-prod:
     profiles: ["prod"]
-    image: simple-tools-hub-analytics-prod
+    image: sourcebee-analytics-prod
     build:
       context: ./analytics
       dockerfile: Dockerfile

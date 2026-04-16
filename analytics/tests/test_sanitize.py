@@ -1,4 +1,19 @@
-from app.sanitize import normalize_pathname, normalize_referrer, sanitize_meta
+try:
+    from app.sanitize import normalize_pathname, normalize_referrer, sanitize_meta
+except ModuleNotFoundError:  # pragma: no cover - monorepo root fallback
+    from importlib.util import module_from_spec, spec_from_file_location
+    from pathlib import Path
+
+    sanitize_path = Path(__file__).resolve().parents[1] / "app" / "sanitize.py"
+    spec = spec_from_file_location("analytics_sanitize", sanitize_path)
+    if spec is None or spec.loader is None:  # pragma: no cover
+        raise
+    module = module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    normalize_pathname = module.normalize_pathname
+    normalize_referrer = module.normalize_referrer
+    sanitize_meta = module.sanitize_meta
 
 
 def test_sanitize_meta_strips_sensitive_keys() -> None:

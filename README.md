@@ -14,9 +14,14 @@ Public website of fast, useful, SEO-optimized developer tools.
 
 - JWT decoder
 - Base64 encode/decode
+- URL encoder/decoder
 - JSON formatter / validator
+- JSON <-> YAML converter
+- Hash generator
+- UUID generator
+- Timestamp converter
+- Cron parser/generator
 - Unit converter
-- Calculator
 - SSL certificate checker
 - QR code generator
 - Image converter

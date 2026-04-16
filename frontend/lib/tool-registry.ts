@@ -1,9 +1,14 @@
 export type ToolSlug =
   | "jwt-decoder"
   | "base64"
+  | "json-yaml"
+  | "hash-generator"
+  | "uuid-generator"
+  | "url-encoder-decoder"
+  | "timestamp-converter"
+  | "cron-parser-generator"
   | "json-formatter"
   | "unit-converter"
-  | "calculator"
   | "ssl-checker"
   | "qr-code-generator"
   | "image-converter"
@@ -14,9 +19,14 @@ export type ToolSlug =
 export type ToolApiSlug =
   | "jwt-decode"
   | "base64"
+  | "json-yaml"
+  | "hash-generator"
+  | "uuid-generator"
+  | "url-encoder-decoder"
+  | "timestamp-converter"
+  | "cron-parser-generator"
   | "json-formatter"
   | "unit-converter"
-  | "calculator"
   | "ssl-checker"
   | "qr-code"
   | "image-converter"
@@ -30,6 +40,12 @@ export type CategorySlug = "encoding" | "data" | "developer" | "security" | "uti
 export type ToolIconKey =
   | "token"
   | "base64"
+  | "yaml"
+  | "hash"
+  | "uuid"
+  | "url"
+  | "time"
+  | "cron"
   | "json"
   | "units"
   | "math"
@@ -92,7 +108,7 @@ export const CATEGORIES: CategoryDefinition[] = [
   {
     slug: "utilities",
     name: "Utilities",
-    description: "General conversion and calculator tools for quick tasks.",
+    description: "General conversion tools for quick tasks.",
   },
 ];
 
@@ -154,6 +170,168 @@ export const TOOLS: ToolDefinition[] = [
     ],
   },
   {
+    slug: "url-encoder-decoder",
+    apiSlug: "url-encoder-decoder",
+    name: "URL Encoder/Decoder",
+    iconKey: "url",
+    category: "encoding",
+    searchKeywords: ["url", "encode", "decode", "percent", "query", "uri"],
+    shortDescription: "Encode and decode URL-safe text for query strings and path segments.",
+    intro:
+      "Convert plain text into percent-encoded URL text and decode encoded URL components back to readable UTF-8.",
+    explanation:
+      "Useful for debugging query parameters, callback URLs, redirects, and API payloads that include encoded text.",
+    seoTitle: "URL Encoder and Decoder - Percent Encode or Decode Text",
+    seoDescription:
+      "Encode and decode URL text instantly with UTF-8 handling and clear output for developer workflows.",
+    related: ["base64", "json-formatter", "timestamp-converter"],
+    faqs: [
+      {
+        question: "Does this encode spaces and reserved symbols?",
+        answer: "Yes. Spaces and reserved characters are percent-encoded for URL-safe component usage.",
+      },
+      {
+        question: "Can I decode UTF-8 URL text?",
+        answer: "Yes. Decoding expects UTF-8 encoded content and returns readable text output.",
+      },
+    ],
+  },
+  {
+    slug: "json-yaml",
+    apiSlug: "json-yaml",
+    name: "JSON <-> YAML Converter",
+    iconKey: "yaml",
+    category: "data",
+    searchKeywords: ["json", "yaml", "yml", "convert", "transform", "parser"],
+    shortDescription: "Convert JSON to YAML and YAML back to pretty JSON safely.",
+    intro:
+      "Switch between JSON and YAML formats quickly for configs, API payloads, and infrastructure manifests.",
+    explanation:
+      "Supports bidirectional conversion with strict parsing and optional key sorting for deterministic output.",
+    seoTitle: "JSON to YAML and YAML to JSON Converter",
+    seoDescription:
+      "Convert JSON and YAML instantly with safe parsing, readable formatting, and developer-friendly output.",
+    related: ["json-formatter", "base64", "url-encoder-decoder"],
+    faqs: [
+      {
+        question: "Does this support conversion in both directions?",
+        answer: "Yes. You can convert JSON to YAML and YAML back to formatted JSON.",
+      },
+      {
+        question: "Can I sort object keys in output?",
+        answer: "Yes. Enable key sorting to produce stable, deterministic output ordering.",
+      },
+    ],
+  },
+  {
+    slug: "hash-generator",
+    apiSlug: "hash-generator",
+    name: "Hash Generator",
+    iconKey: "hash",
+    category: "security",
+    searchKeywords: ["hash", "sha256", "sha512", "md5", "digest", "checksum"],
+    shortDescription: "Generate deterministic hashes using MD5, SHA-1, SHA-2 algorithms.",
+    intro:
+      "Create hash digests from text input quickly for verification, debugging, and integration workflows.",
+    explanation:
+      "Supports MD5, SHA-1, SHA-224, SHA-256, SHA-384, and SHA-512 output in lowercase hexadecimal format.",
+    seoTitle: "Hash Generator - MD5, SHA-1, SHA-256, SHA-512 Online",
+    seoDescription:
+      "Generate text hashes instantly with algorithm selection for common developer and security checks.",
+    related: ["password-generator", "jwt-decoder", "base64"],
+    faqs: [
+      {
+        question: "Is hashing the same as encryption?",
+        answer: "No. Hashing is one-way and cannot be reversed to recover the original input.",
+      },
+      {
+        question: "Which algorithms are available?",
+        answer: "MD5, SHA-1, SHA-224, SHA-256, SHA-384, and SHA-512 are supported.",
+      },
+    ],
+  },
+  {
+    slug: "uuid-generator",
+    apiSlug: "uuid-generator",
+    name: "UUID Generator",
+    iconKey: "uuid",
+    category: "developer",
+    searchKeywords: ["uuid", "guid", "id", "unique", "v4", "identifier"],
+    shortDescription: "Generate one or many UUID v4 identifiers with formatting options.",
+    intro:
+      "Create random UUID v4 values for database keys, distributed systems, and test fixtures.",
+    explanation:
+      "Supports batch generation with optional uppercase output and hyphen removal.",
+    seoTitle: "UUID Generator - Fast UUID v4 IDs",
+    seoDescription:
+      "Generate UUID v4 values instantly with bulk output and formatting controls for developer workflows.",
+    related: ["timestamp-converter", "json-formatter", "hash-generator"],
+    faqs: [
+      {
+        question: "Which UUID version does this generate?",
+        answer: "This tool generates RFC-compatible random UUID version 4 values.",
+      },
+      {
+        question: "Can I generate multiple IDs at once?",
+        answer: "Yes. You can request batch generation and copy all IDs in one action.",
+      },
+    ],
+  },
+  {
+    slug: "timestamp-converter",
+    apiSlug: "timestamp-converter",
+    name: "Timestamp Converter",
+    iconKey: "time",
+    category: "developer",
+    searchKeywords: ["timestamp", "unix", "epoch", "iso", "datetime", "utc"],
+    shortDescription: "Convert Unix timestamps and ISO-8601 datetimes with UTC output.",
+    intro:
+      "Convert between Unix seconds, Unix milliseconds, and ISO datetime formats for logs and integrations.",
+    explanation:
+      "Input is auto-detected and converted into UTC ISO text, Unix seconds, and Unix milliseconds.",
+    seoTitle: "Timestamp Converter - Unix and ISO-8601",
+    seoDescription:
+      "Convert Unix timestamps to ISO UTC and ISO datetimes to Unix seconds/milliseconds instantly.",
+    related: ["uuid-generator", "url-encoder-decoder", "json-formatter"],
+    faqs: [
+      {
+        question: "Does this support milliseconds?",
+        answer: "Yes. Numeric input is auto-detected as seconds or milliseconds by magnitude.",
+      },
+      {
+        question: "What timezone is used in output?",
+        answer: "ISO output is normalized to UTC and returned with a trailing Z.",
+      },
+    ],
+  },
+  {
+    slug: "cron-parser-generator",
+    apiSlug: "cron-parser-generator",
+    name: "Cron Parser/Generator",
+    iconKey: "cron",
+    category: "developer",
+    searchKeywords: ["cron", "schedule", "parser", "generator", "expression", "jobs"],
+    shortDescription: "Parse cron expressions and generate schedules from field values.",
+    intro:
+      "Inspect standard 5-field cron expressions or build a cron schedule from minute/hour/day fields.",
+    explanation:
+      "Supports wildcard, ranges, lists, and step values across the five standard cron fields.",
+    seoTitle: "Cron Parser and Generator - 5-Field Cron Tool",
+    seoDescription:
+      "Parse and generate standard cron expressions with validation and readable schedule summaries.",
+    related: ["timestamp-converter", "json-formatter", "uuid-generator"],
+    faqs: [
+      {
+        question: "Which cron format is supported?",
+        answer: "The tool supports the standard 5-field cron format: minute hour day-of-month month day-of-week.",
+      },
+      {
+        question: "Does it validate ranges and steps?",
+        answer: "Yes. Invalid ranges, empty list items, and invalid step values are rejected with clear errors.",
+      },
+    ],
+  },
+  {
     slug: "json-formatter",
     apiSlug: "json-formatter",
     name: "JSON Formatter",
@@ -195,7 +373,7 @@ export const TOOLS: ToolDefinition[] = [
     seoTitle: "Unit Converter - Length, Weight, Temperature, Volume, Speed, Area",
     seoDescription:
       "Fast online unit converter for common categories with a clean interface and practical defaults.",
-    related: ["calculator", "json-formatter", "color-converter"],
+    related: ["json-formatter", "color-converter", "image-converter"],
     faqs: [
       {
         question: "Which categories are supported?",
@@ -204,33 +382,6 @@ export const TOOLS: ToolDefinition[] = [
       {
         question: "Are conversions approximate?",
         answer: "The tool uses standard deterministic conversion constants and formulas.",
-      },
-    ],
-  },
-  {
-    slug: "calculator",
-    apiSlug: "calculator",
-    name: "Calculator",
-    iconKey: "math",
-    category: "developer",
-    searchKeywords: ["arithmetic", "expression", "math", "compute"],
-    shortDescription: "Evaluate arithmetic expressions quickly with safe parsing.",
-    intro:
-      "Run quick arithmetic with strict parsing so unsupported or unsafe expression forms are rejected.",
-    explanation:
-      "Supports common arithmetic operators for reliable day-to-day engineering calculations.",
-    seoTitle: "Online Calculator for Fast Developer Arithmetic",
-    seoDescription:
-      "Simple online calculator with safe expression parsing and reliable numeric output.",
-    related: ["unit-converter", "json-formatter", "color-converter"],
-    faqs: [
-      {
-        question: "Does this evaluate JavaScript code?",
-        answer: "No. It uses a restricted arithmetic parser, not JavaScript eval.",
-      },
-      {
-        question: "Which operators are supported?",
-        answer: "Addition, subtraction, multiplication, division, modulo, floor division, and exponentiation.",
       },
     ],
   },
@@ -386,7 +537,7 @@ export const TOOLS: ToolDefinition[] = [
     seoTitle: "Hex to RGB and RGB to Hex Converter (with Alpha)",
     seoDescription:
       "Convert between hex, hexa, rgb, and rgba color formats with strict validation and clean output.",
-    related: ["calculator", "image-converter", "unit-converter"],
+    related: ["image-converter", "unit-converter", "json-formatter"],
     faqs: [
       {
         question: "Are alpha channels supported?",

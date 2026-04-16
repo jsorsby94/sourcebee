@@ -1,3 +1,4 @@
+import re
 from io import BytesIO
 
 from fastapi.testclient import TestClient
@@ -41,6 +42,93 @@ def test_base64_encode() -> None:
     assert response.json()["output"] == "aGVsbG8="
 
 
+def test_json_yaml_json_to_yaml() -> None:
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/tools/json-yaml",
+            json={"mode": "json-to-yaml", "input": '{"b":2,"a":1}', "sort_keys": True},
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["mode"] == "json-to-yaml"
+    assert data["output"] == "a: 1\nb: 2\n"
+
+
+def test_json_yaml_yaml_to_json() -> None:
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/tools/json-yaml",
+            json={"mode": "yaml-to-json", "input": "name: sourcebee\ncount: 3"},
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["mode"] == "yaml-to-json"
+    assert '"name": "sourcebee"' in data["output"]
+    assert '"count": 3' in data["output"]
+
+
+def test_hash_generator_sha256() -> None:
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/tools/hash-generator",
+            json={"algorithm": "sha256", "input": "hello"},
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["algorithm"] == "sha256"
+    assert data["input_length"] == 5
+    assert (
+        data["digest"]
+        == "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
+    )
+
+
+def test_uuid_generator_count() -> None:
+    with TestClient(app) as client:
+        response = client.post("/api/tools/uuid-generator", json={"count": 3})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["count"] == 3
+    assert len(data["uuids"]) == 3
+    for value in data["uuids"]:
+        assert re.fullmatch(
+            r"[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}",
+            value,
+        )
+
+
+def test_url_encoder_decoder_encode() -> None:
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/tools/url-encoder-decoder",
+            json={"mode": "encode", "input": "hello world?x=1&y=2"},
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["mode"] == "encode"
+    assert data["output"] == "hello%20world%3Fx%3D1%26y%3D2"
+
+
+def test_timestamp_converter_unix_seconds() -> None:
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/tools/timestamp-converter",
+            json={"input": "1704067200"},
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["detected_type"] == "unix_seconds"
+    assert data["unix_seconds"] == 1704067200
+    assert data["unix_milliseconds"] == 1704067200000
+    assert data["iso_utc"] == "2024-01-01T00:00:00Z"
+
+
 def test_json_formatter_pretty() -> None:
     with TestClient(app) as client:
         response = client.post(
@@ -52,6 +140,43 @@ def test_json_formatter_pretty() -> None:
     assert "\n" in response.json()["output"]
 
 
+def test_cron_parser_mode() -> None:
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/tools/cron-parser-generator",
+            json={"mode": "parse", "expression": "*/15 9-17 * * 1-5"},
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["mode"] == "parse"
+    assert data["expression"] == "*/15 9-17 * * 1-5"
+    assert data["minute"] == "*/15"
+    assert data["hour"] == "9-17"
+    assert data["day_of_week"] == "1-5"
+
+
+def test_cron_generator_mode() -> None:
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/tools/cron-parser-generator",
+            json={
+                "mode": "generate",
+                "minute": "0",
+                "hour": "12",
+                "day_of_month": "*",
+                "month": "*",
+                "day_of_week": "1-5",
+            },
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["mode"] == "generate"
+    assert data["expression"] == "0 12 * * 1-5"
+    assert "hour 12" in data["description"]
+
+
 def test_unit_converter() -> None:
     with TestClient(app) as client:
         response = client.post(
@@ -61,14 +186,6 @@ def test_unit_converter() -> None:
 
     assert response.status_code == 200
     assert response.json()["output_value"] == 1000
-
-
-def test_calculator_expression() -> None:
-    with TestClient(app) as client:
-        response = client.post("/api/tools/calculator", json={"expression": "(2+3)*4"})
-
-    assert response.status_code == 200
-    assert response.json()["result"] == 20
 
 
 def test_ssl_checker_rejects_localhost() -> None:
