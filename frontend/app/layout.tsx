@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 
-import "@/app/globals.css";
+import "./globals.css";
 import { AnalyticsTracker } from "@/components/analytics/analytics-tracker";
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
