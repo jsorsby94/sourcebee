@@ -52,6 +52,10 @@ export async function POST(request: Request, context: { params: Promise<{ tool: 
   const pathname = new URL(request.url).pathname;
   const visitorIdFromHeader = request.headers.get("x-visitor-id")?.trim() || undefined;
   const visitorId = visitorIdFromHeader ?? readVisitorIdCookie(request) ?? undefined;
+  const forwardedFor =
+    request.headers.get("x-forwarded-for") ??
+    request.headers.get("cf-connecting-ip") ??
+    request.headers.get("x-real-ip");
 
   if (!TOOL_API_SLUGS.includes(tool as ToolApiSlug)) {
     await emitServerAnalyticsEvent({
@@ -152,6 +156,7 @@ export async function POST(request: Request, context: { params: Promise<{ tool: 
       headers: {
         "x-request-id": requestId,
         ...(visitorId ? { "x-visitor-id": visitorId } : {}),
+        ...(forwardedFor ? { "x-forwarded-for": forwardedFor } : {}),
         ...(rawContentType ? { "content-type": rawContentType } : {}),
       },
       body: bodyBuffer,

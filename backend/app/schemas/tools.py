@@ -38,9 +38,7 @@ class JSONYAMLResponse(BaseModel):
 
 
 class HashGeneratorRequest(BaseModel):
-    algorithm: Literal["md5", "sha1", "sha224", "sha256", "sha384", "sha512"] = (
-        "sha256"
-    )
+    algorithm: Literal["md5", "sha1", "sha224", "sha256", "sha384", "sha512"] = "sha256"
     input: str = Field(min_length=0, max_length=200000)
 
 

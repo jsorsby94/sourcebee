@@ -19,7 +19,9 @@ def _from_unix_seconds(seconds: float) -> datetime:
     try:
         return datetime.fromtimestamp(seconds, tz=timezone.utc)
     except (OverflowError, OSError, ValueError) as exc:
-        raise AppError(400, "invalid_timestamp", "Timestamp is out of supported range") from exc
+        raise AppError(
+            400, "invalid_timestamp", "Timestamp is out of supported range"
+        ) from exc
 
 
 def _parse_numeric_timestamp(input_value: str) -> tuple[datetime, str]:

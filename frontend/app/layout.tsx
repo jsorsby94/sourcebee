@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 
 import "@/app/globals.css";
@@ -6,8 +6,9 @@ import { AnalyticsTracker } from "@/components/analytics/analytics-tracker";
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
 import { ThemeProvider } from "@/components/layout/theme-provider";
+import { getSiteUrl } from "@/lib/seo";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:4000";
+const siteUrl = getSiteUrl();
 const appEnvRaw = (
   process.env.APP_ENV ??
   process.env.NEXT_PUBLIC_APP_ENV ??
@@ -15,15 +16,7 @@ const appEnvRaw = (
   "development"
 ).toLowerCase();
 
-export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
-  title: {
-    default: "Sourcebee",
-    template: "%s | Sourcebee",
-  },
-  description:
-    "Sourcebee is a fast, precision-focused hive of developer tools for decoding, formatting, conversion, and security diagnostics.",
-  manifest: "/favicon/light/site.webmanifest",
+export const viewport: Viewport = {
   themeColor: [
     {
       media: "(prefers-color-scheme: light)",
@@ -34,6 +27,21 @@ export const metadata: Metadata = {
       color: "#020617",
     },
   ],
+};
+
+export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
+  applicationName: "Sourcebee",
+  title: {
+    default: "Sourcebee",
+    template: "%s | Sourcebee",
+  },
+  description:
+    "Sourcebee is a fast, precision-focused hive of developer tools for decoding, formatting, conversion, and security diagnostics.",
+  alternates: {
+    canonical: siteUrl,
+  },
+  manifest: "/favicon/light/site.webmanifest",
   icons: {
     icon: [
       {
@@ -97,6 +105,7 @@ export const metadata: Metadata = {
     description: "A high-performance hive of precise developer tools built for real engineering workflows.",
     type: "website",
     url: siteUrl,
+    siteName: "Sourcebee",
   },
   twitter: {
     card: "summary_large_image",

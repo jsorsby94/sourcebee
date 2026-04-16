@@ -25,9 +25,7 @@ def _parse_int(token: str, field_name: str, minimum: int, maximum: int) -> int:
     return value
 
 
-def _validate_atom(
-    atom: str, field_name: str, minimum: int, maximum: int
-) -> None:
+def _validate_atom(atom: str, field_name: str, minimum: int, maximum: int) -> None:
     if atom == "*":
         return
 

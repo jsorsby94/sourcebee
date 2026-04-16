@@ -4,7 +4,19 @@ import type { CategoryDefinition, ToolDefinition } from "@/lib/tool-registry";
 
 export function getSiteUrl(): string {
   const envUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  return envUrl && envUrl.length > 0 ? envUrl : "http://localhost:4000";
+  if (envUrl && envUrl.length > 0) {
+    return envUrl;
+  }
+
+  const envRaw =
+    process.env.NEXT_PUBLIC_APP_ENV ??
+    process.env.APP_ENV ??
+    process.env.NODE_ENV ??
+    "development";
+  const env = envRaw.toLowerCase();
+  const isProduction = env === "prod" || env === "production";
+
+  return isProduction ? "https://sourcebee.org" : "http://localhost:4000";
 }
 
 export function toAbsoluteUrl(path: string): string {

@@ -43,7 +43,8 @@ Public website of fast, useful, SEO-optimized developer tools.
   - Analytics dashboard: `http://localhost:4100/dashboard`
   - Services: `frontend-dev`, `backend-dev`, `redis-dev`, `analytics-dev`, `mongodb-dev`
 - `prod` environment:
-  - Frontend: `http://localhost:4001`
+  - Frontend (public domain): `https://sourcebee.org`
+  - Frontend (local compose port): `http://localhost:4001`
   - Analytics dashboard: `http://localhost:4101/dashboard`
   - Services: `frontend-prod`, `backend-prod`, `redis-prod`, `analytics-prod`, `mongodb-prod`
 
@@ -59,7 +60,8 @@ Both environments can run simultaneously without port/name collisions.
    - `docker compose --profile dev --profile prod up --build -d`
 4. Open:
    - Dev frontend: `http://localhost:4000`
-   - Prod frontend: `http://localhost:4001`
+   - Prod frontend (local compose): `http://localhost:4001`
+   - Prod frontend (deployed): `https://sourcebee.org`
    - Dev analytics dashboard (internal localhost bind): `http://localhost:4100/dashboard`
    - Prod analytics dashboard (internal localhost bind): `http://localhost:4101/dashboard`
    - Backends are internal-only (not host-published).

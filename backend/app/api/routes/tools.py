@@ -157,9 +157,7 @@ async def json_yaml(payload: JSONYAMLRequest) -> JSONYAMLResponse:
     dependencies=[Depends(rate_limit_dependency("hash-generator"))],
 )
 async def hash_generator(payload: HashGeneratorRequest) -> HashGeneratorResponse:
-    return HashGeneratorResponse(
-        **generate_hash(payload.algorithm, payload.input)
-    )
+    return HashGeneratorResponse(**generate_hash(payload.algorithm, payload.input))
 
 
 @router.post(

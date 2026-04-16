@@ -20,7 +20,9 @@ def convert_json_yaml(
         try:
             parsed = json.loads(input_text)
         except json.JSONDecodeError as exc:
-            message = f"Invalid JSON at line {exc.lineno}, column {exc.colno}: {exc.msg}"
+            message = (
+                f"Invalid JSON at line {exc.lineno}, column {exc.colno}: {exc.msg}"
+            )
             raise AppError(400, "invalid_json", message) from exc
 
         output = yaml.safe_dump(

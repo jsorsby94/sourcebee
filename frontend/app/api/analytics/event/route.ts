@@ -41,8 +41,19 @@ function normalizePathname(pathname: string): string {
   return pathOnly.startsWith("/") ? pathOnly : `/${pathOnly}`;
 }
 
-function serializeVisitorCookie(visitorId: string): string {
-  return `${VISITOR_COOKIE_NAME}=${encodeURIComponent(visitorId)}; Path=/; Max-Age=${VISITOR_COOKIE_MAX_AGE_SECONDS.toString()}; SameSite=Lax`;
+function isSecureRequest(request: Request): boolean {
+  const forwardedProtoRaw = request.headers.get("x-forwarded-proto") ?? "";
+  const forwardedProto = forwardedProtoRaw.split(",", 1)[0]?.trim().toLowerCase();
+  if (forwardedProto === "https") {
+    return true;
+  }
+
+  return request.url.startsWith("https://");
+}
+
+function serializeVisitorCookie(visitorId: string, secure: boolean): string {
+  const securePart = secure ? "; Secure" : "";
+  return `${VISITOR_COOKIE_NAME}=${encodeURIComponent(visitorId)}; Path=/; Max-Age=${VISITOR_COOKIE_MAX_AGE_SECONDS.toString()}; SameSite=Lax${securePart}`;
 }
 
 export async function POST(request: Request) {
@@ -124,7 +135,7 @@ export async function POST(request: Request) {
   });
 
   if (!cookieVisitorId) {
-    response.headers.set("set-cookie", serializeVisitorCookie(visitorId));
+    response.headers.set("set-cookie", serializeVisitorCookie(visitorId, isSecureRequest(request)));
   }
 
   return response;

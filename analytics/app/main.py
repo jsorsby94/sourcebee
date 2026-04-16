@@ -21,6 +21,7 @@ from app.sanitize import (
 )
 
 logger = logging.getLogger(__name__)
+HSTS_VALUE = "max-age=31536000; includeSubDomains"
 
 
 class AnalyticsEventIn(BaseModel):
@@ -66,6 +67,15 @@ def _extract_ip(request: Request, payload_ip: str | None) -> str:
         return request.client.host[:128]
 
     return "unknown"
+
+
+def _is_secure_request(request: Request) -> bool:
+    forwarded_proto_raw = request.headers.get("x-forwarded-proto", "")
+    forwarded_proto = forwarded_proto_raw.split(",", maxsplit=1)[0].strip().lower()
+    if forwarded_proto:
+        return forwarded_proto == "https"
+
+    return request.url.scheme == "https"
 
 
 def _parse_datetime(raw: str | None, fallback: datetime) -> datetime:
@@ -204,6 +214,8 @@ async def security_and_size_middleware(request: Request, call_next):
         "frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     )
     response.headers["Cache-Control"] = "no-store"
+    if settings.app_env == "production" and _is_secure_request(request):
+        response.headers["Strict-Transport-Security"] = HSTS_VALUE
 
     return response
 

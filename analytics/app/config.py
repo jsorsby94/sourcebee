@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     mongodb_url: str = "mongodb://mongodb:27017"
-    mongodb_db_name: str = "simple_tools_hub_dev_analytics"
+    mongodb_db_name: str = "sourcebee_dev_analytics"
 
     ingest_max_bytes: int = Field(default=16_384, ge=1_024, le=262_144)
     dashboard_default_window_hours: int = Field(default=24, ge=1, le=720)

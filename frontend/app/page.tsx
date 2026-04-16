@@ -7,7 +7,7 @@ import { CATEGORIES, TOOLS } from "@/lib/tool-registry";
 import { toAbsoluteUrl } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  title: "Precision Developer Tools",
+  title: "Sourcebee | Precision Developer Tools",
   description:
     "Sourcebee is a fast, precise hive of developer tools for JWT decode, Base64, JSON formatting, conversion workflows, and security diagnostics.",
   alternates: {

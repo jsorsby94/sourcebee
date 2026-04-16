@@ -28,7 +28,8 @@ function getCookieValue(key: string): string | null {
 }
 
 function setVisitorCookie(visitorId: string): void {
-  document.cookie = `${VISITOR_COOKIE_NAME}=${encodeURIComponent(visitorId)}; Path=/; Max-Age=${VISITOR_COOKIE_MAX_AGE_SECONDS.toString()}; SameSite=Lax`;
+  const secure = window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${VISITOR_COOKIE_NAME}=${encodeURIComponent(visitorId)}; Path=/; Max-Age=${VISITOR_COOKIE_MAX_AGE_SECONDS.toString()}; SameSite=Lax${secure}`;
 }
 
 function getOrCreateVisitorId(): string {
