@@ -40,7 +40,7 @@ export function Footer() {
               </Link>
             ))}
             <Link
-              href="https://github.com/jsorsby94"
+              href="https://github.com/jsorsby94/sourcebee"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-slate-700 transition hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
