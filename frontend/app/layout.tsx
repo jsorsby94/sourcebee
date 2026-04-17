@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 
 import "./globals.css";
+import { AnalyticsConsentBanner } from "@/components/analytics/analytics-consent-banner";
 import { AnalyticsTracker } from "@/components/analytics/analytics-tracker";
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
@@ -46,59 +47,19 @@ export const metadata: Metadata = {
     icon: [
       {
         url: "/favicon/light/favicon.ico",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/favicon/dark/favicon.ico",
-        media: "(prefers-color-scheme: dark)",
       },
       {
         url: "/favicon/light/favicon.svg",
         type: "image/svg+xml",
-        media: "(prefers-color-scheme: light)",
       },
       {
-        url: "/favicon/dark/favicon.svg",
-        type: "image/svg+xml",
-        media: "(prefers-color-scheme: dark)",
-      },
-      {
-        url: "/web-app-manifest-192x192.png",
+        url: "/favicon/light/web-app-manifest-192x192.png",
         type: "image/png",
         sizes: "192x192",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/web-app-manifest-192x192-dark.png",
-        type: "image/png",
-        sizes: "192x192",
-        media: "(prefers-color-scheme: dark)",
       },
     ],
-    shortcut: [
-      {
-        url: "/favicon/light/favicon.ico",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/favicon/dark/favicon.ico",
-        media: "(prefers-color-scheme: dark)",
-      },
-    ],
-    apple: [
-      {
-        url: "/favicon/light/apple-touch-icon.png",
-        sizes: "180x180",
-        type: "image/png",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/favicon/dark/apple-touch-icon.png",
-        sizes: "180x180",
-        type: "image/png",
-        media: "(prefers-color-scheme: dark)",
-      },
-    ],
+    shortcut: [{ url: "/favicon/light/favicon.ico" }],
+    apple: [{ url: "/favicon/light/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
   openGraph: {
     title: "Sourcebee",
@@ -119,9 +80,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <link rel="manifest" href="/favicon/dark/site.webmanifest" media="(prefers-color-scheme: dark)" />
-      </head>
       <body>
         {showDevRibbon ? (
           <div className="pointer-events-none fixed left-[-52px] top-5 z-50 w-52 -rotate-45 border border-black/25 bg-amber-500/95 py-1 text-center text-xs font-bold tracking-[0.18em] text-black shadow-lg">
@@ -133,6 +91,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <Header />
           <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">{children}</main>
           <Footer />
+          <AnalyticsConsentBanner />
         </ThemeProvider>
       </body>
     </html>

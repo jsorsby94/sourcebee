@@ -1,4 +1,9 @@
 import { VISITOR_COOKIE_NAME } from "@/lib/analytics-config";
+import {
+  hasAnalyticsConsent as hasAnalyticsConsentCookie,
+  parseCookie,
+  readAnalyticsConsent,
+} from "@/lib/analytics-consent";
 
 const SENSITIVE_KEY_FRAGMENTS = ["input", "token", "password", "data", "file", "content", "payload"];
 
@@ -111,35 +116,16 @@ function extractIp(headers: Headers): string {
   return "unknown";
 }
 
-function parseCookie(headerValue: string | null, key: string): string | null {
-  if (!headerValue) {
-    return null;
-  }
-
-  const parts = headerValue.split(";");
-  for (const part of parts) {
-    const [rawKey, ...rest] = part.trim().split("=");
-    if (!rawKey || rest.length === 0) {
-      continue;
-    }
-    if (rawKey === key) {
-      const value = rest.join("=").trim();
-      if (!value) {
-        return null;
-      }
-      try {
-        return decodeURIComponent(value);
-      } catch {
-        return value;
-      }
-    }
-  }
-
-  return null;
-}
-
 export function readVisitorIdCookie(request: Request): string | null {
   return parseCookie(request.headers.get("cookie"), VISITOR_COOKIE_NAME);
+}
+
+export function readAnalyticsConsentCookie(request: Request) {
+  return readAnalyticsConsent(request.headers.get("cookie"));
+}
+
+export function hasAnalyticsConsent(request: Request): boolean {
+  return hasAnalyticsConsentCookie(request.headers.get("cookie"));
 }
 
 export interface ServerAnalyticsEventInput {
@@ -156,6 +142,10 @@ export interface ServerAnalyticsEventInput {
 }
 
 export async function emitServerAnalyticsEvent(input: ServerAnalyticsEventInput): Promise<void> {
+  if (!hasAnalyticsConsent(input.request)) {
+    return;
+  }
+
   const analyticsBase = process.env.ANALYTICS_INTERNAL_URL?.trim();
   if (!analyticsBase) {
     return;

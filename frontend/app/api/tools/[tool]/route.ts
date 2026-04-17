@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { TOOL_API_SLUGS, type ToolApiSlug } from "@/lib/tool-registry";
-import { emitServerAnalyticsEvent, readVisitorIdCookie } from "@/lib/server-analytics";
+import { emitServerAnalyticsEvent, hasAnalyticsConsent, readVisitorIdCookie } from "@/lib/server-analytics";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -50,8 +50,9 @@ export async function POST(request: Request, context: { params: Promise<{ tool: 
   const startedAt = Date.now();
   const { tool } = await context.params;
   const pathname = new URL(request.url).pathname;
-  const visitorIdFromHeader = request.headers.get("x-visitor-id")?.trim() || undefined;
-  const visitorId = visitorIdFromHeader ?? readVisitorIdCookie(request) ?? undefined;
+  const analyticsConsentGranted = hasAnalyticsConsent(request);
+  const visitorIdFromHeader = analyticsConsentGranted ? request.headers.get("x-visitor-id")?.trim() || undefined : undefined;
+  const visitorId = analyticsConsentGranted ? (visitorIdFromHeader ?? readVisitorIdCookie(request) ?? undefined) : undefined;
   const forwardedFor =
     request.headers.get("x-forwarded-for") ??
     request.headers.get("cf-connecting-ip") ??

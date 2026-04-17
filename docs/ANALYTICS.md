@@ -4,6 +4,18 @@
 
 Collect behavior telemetry at high volume while preserving zero-retention for sensitive tool content.
 
+## Consent model
+
+- First visit: show analytics consent banner
+- `Accept`: enable analytics, set visitor ID cookie, and allow analytics events
+- `Reject`: keep analytics disabled and continue normal app usage
+- Until `Accept`: do not set `visitor_id` cookie and do not send analytics events to `/internal/events`
+
+## Cookie categories
+
+- Essential (minimal): analytics consent preference cookie
+- Analytics: visitor ID cookie (`sourcebee_vid`)
+
 ## Stored telemetry metadata
 
 - client IP (raw)
@@ -26,6 +38,12 @@ Collect behavior telemetry at high volume while preserving zero-retention for se
 - generated passwords/passphrases
 - QR payload text
 - binary response content
+
+## Privacy note on IP addresses
+
+- Raw IP addresses are personal data under GDPR and similar laws.
+- Privacy disclosure is required even when analytics cookies are rejected.
+- Consent requirements can vary by jurisdiction.
 
 ## Internal endpoints
 

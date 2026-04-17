@@ -1,30 +1,17 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { ANALYTICS_ENABLED, VISITOR_COOKIE_MAX_AGE_SECONDS, VISITOR_COOKIE_NAME } from "@/lib/analytics-config";
+import {
+  ANALYTICS_CONSENT_CHANGE_EVENT,
+  parseCookie,
+  readAnalyticsConsent,
+} from "@/lib/analytics-consent";
 
 function getCookieValue(key: string): string | null {
-  const cookie = document.cookie
-    .split(";")
-    .map((chunk) => chunk.trim())
-    .find((chunk) => chunk.startsWith(`${key}=`));
-
-  if (!cookie) {
-    return null;
-  }
-
-  const value = cookie.slice(key.length + 1);
-  if (!value) {
-    return null;
-  }
-
-  try {
-    return decodeURIComponent(value);
-  } catch {
-    return value;
-  }
+  return parseCookie(document.cookie, key);
 }
 
 function setVisitorCookie(visitorId: string): void {
@@ -41,6 +28,10 @@ function getOrCreateVisitorId(): string {
   const generated = crypto.randomUUID();
   setVisitorCookie(generated);
   return generated;
+}
+
+function hasAcceptedConsent(): boolean {
+  return readAnalyticsConsent(document.cookie) === "accepted";
 }
 
 async function emitClientEvent(payload: {
@@ -71,17 +62,35 @@ async function emitClientEvent(payload: {
 export function AnalyticsTracker() {
   const pathname = usePathname();
   const visitorIdRef = useRef<string | null>(null);
+  const [consentAccepted, setConsentAccepted] = useState(false);
 
   useEffect(() => {
     if (!ANALYTICS_ENABLED) {
       return;
     }
 
-    visitorIdRef.current = getOrCreateVisitorId();
+    const syncConsent = () => {
+      const accepted = hasAcceptedConsent();
+      if (!accepted) {
+        visitorIdRef.current = null;
+      }
+      setConsentAccepted(accepted);
+    };
+
+    syncConsent();
+
+    const onConsentChange = () => {
+      syncConsent();
+    };
+
+    window.addEventListener(ANALYTICS_CONSENT_CHANGE_EVENT, onConsentChange);
+    return () => {
+      window.removeEventListener(ANALYTICS_CONSENT_CHANGE_EVENT, onConsentChange);
+    };
   }, []);
 
   useEffect(() => {
-    if (!ANALYTICS_ENABLED) {
+    if (!ANALYTICS_ENABLED || !consentAccepted) {
       return;
     }
 
@@ -93,10 +102,10 @@ export function AnalyticsTracker() {
       pathname,
       visitor_id: visitorId,
     });
-  }, [pathname]);
+  }, [consentAccepted, pathname]);
 
   useEffect(() => {
-    if (!ANALYTICS_ENABLED) {
+    if (!ANALYTICS_ENABLED || !consentAccepted) {
       return;
     }
 
@@ -144,7 +153,7 @@ export function AnalyticsTracker() {
     return () => {
       document.removeEventListener("click", onClick, { capture: true });
     };
-  }, []);
+  }, [consentAccepted]);
 
   return null;
 }

@@ -1,5 +1,6 @@
 import type { ToolApiSlug } from "@/lib/tool-registry";
 import { VISITOR_COOKIE_NAME } from "@/lib/analytics-config";
+import { parseCookie, readAnalyticsConsent } from "@/lib/analytics-consent";
 
 export interface ToolApiErrorPayload {
   error: {
@@ -41,25 +42,11 @@ function readVisitorId(): string | undefined {
     return undefined;
   }
 
-  const cookie = document.cookie
-    .split(";")
-    .map((chunk) => chunk.trim())
-    .find((chunk) => chunk.startsWith(`${VISITOR_COOKIE_NAME}=`));
-
-  if (!cookie) {
+  if (readAnalyticsConsent(document.cookie) !== "accepted") {
     return undefined;
   }
 
-  const value = cookie.slice(VISITOR_COOKIE_NAME.length + 1);
-  if (!value) {
-    return undefined;
-  }
-
-  try {
-    return decodeURIComponent(value);
-  } catch {
-    return value;
-  }
+  return parseCookie(document.cookie, VISITOR_COOKIE_NAME) ?? undefined;
 }
 
 function parseFilename(contentDisposition: string | null): string | null {

@@ -19,6 +19,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "daily",
       priority: 0.9,
     },
+    {
+      url: toAbsoluteUrl("/privacy"),
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.5,
+    },
     ...TOOLS.map((tool) => ({
       url: toAbsoluteUrl(`/tools/${tool.slug}`),
       lastModified: now,

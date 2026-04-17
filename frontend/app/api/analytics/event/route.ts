@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { ANALYTICS_ENABLED, VISITOR_COOKIE_MAX_AGE_SECONDS, VISITOR_COOKIE_NAME } from "@/lib/analytics-config";
-import { emitServerAnalyticsEvent, readVisitorIdCookie } from "@/lib/server-analytics";
+import { ANALYTICS_ENABLED } from "@/lib/analytics-config";
+import { emitServerAnalyticsEvent, hasAnalyticsConsent, readVisitorIdCookie } from "@/lib/server-analytics";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -41,25 +41,20 @@ function normalizePathname(pathname: string): string {
   return pathOnly.startsWith("/") ? pathOnly : `/${pathOnly}`;
 }
 
-function isSecureRequest(request: Request): boolean {
-  const forwardedProtoRaw = request.headers.get("x-forwarded-proto") ?? "";
-  const forwardedProto = forwardedProtoRaw.split(",", 1)[0]?.trim().toLowerCase();
-  if (forwardedProto === "https") {
-    return true;
-  }
-
-  return request.url.startsWith("https://");
-}
-
-function serializeVisitorCookie(visitorId: string, secure: boolean): string {
-  const securePart = secure ? "; Secure" : "";
-  return `${VISITOR_COOKIE_NAME}=${encodeURIComponent(visitorId)}; Path=/; Max-Age=${VISITOR_COOKIE_MAX_AGE_SECONDS.toString()}; SameSite=Lax${securePart}`;
-}
-
 export async function POST(request: Request) {
   const requestId = request.headers.get("x-request-id") ?? crypto.randomUUID();
 
   if (!ANALYTICS_ENABLED) {
+    return new NextResponse(null, {
+      status: 204,
+      headers: {
+        "cache-control": "no-store",
+        "x-request-id": requestId,
+      },
+    });
+  }
+
+  if (!hasAnalyticsConsent(request)) {
     return new NextResponse(null, {
       status: 204,
       headers: {
@@ -126,17 +121,11 @@ export async function POST(request: Request) {
     meta,
   });
 
-  const response = new NextResponse(null, {
+  return new NextResponse(null, {
     status: 204,
     headers: {
       "cache-control": "no-store",
       "x-request-id": requestId,
     },
   });
-
-  if (!cookieVisitorId) {
-    response.headers.set("set-cookie", serializeVisitorCookie(visitorId, isSecureRequest(request)));
-  }
-
-  return response;
 }
