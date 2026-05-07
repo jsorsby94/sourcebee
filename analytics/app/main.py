@@ -147,6 +147,43 @@ def _get_db(request: Request) -> Database:
     return db
 
 
+def _parse_content_length(raw_value: str | None) -> int | None:
+    if raw_value is None:
+        return None
+
+    value = raw_value.strip()
+    if not value.isdigit():
+        raise HTTPException(status_code=400, detail="invalid_content_length")
+
+    return int(value)
+
+
+async def _read_body_with_limit(request: Request, max_bytes: int) -> bytes:
+    chunks: list[bytes] = []
+    total = 0
+
+    async for chunk in request.stream():
+        total += len(chunk)
+        if total > max_bytes:
+            raise HTTPException(status_code=413, detail="payload_too_large")
+        chunks.append(chunk)
+
+    return b"".join(chunks)
+
+
+def _build_body_receiver(body: bytes):
+    consumed = False
+
+    async def receive():
+        nonlocal consumed
+        if consumed:
+            return {"type": "http.request", "body": b"", "more_body": False}
+        consumed = True
+        return {"type": "http.request", "body": body, "more_body": False}
+
+    return receive
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = get_settings()
@@ -185,19 +222,28 @@ async def security_and_size_middleware(request: Request, call_next):
     settings = get_settings()
 
     if request.method == "POST" and request.url.path == "/internal/events":
-        content_length = request.headers.get("content-length")
-        if content_length is not None:
-            try:
-                if int(content_length) > settings.ingest_max_bytes:
-                    return JSONResponse(
-                        status_code=413,
-                        content={"error": "payload_too_large"},
-                    )
-            except ValueError:
+        try:
+            content_length = _parse_content_length(
+                request.headers.get("content-length")
+            )
+            if (
+                content_length is not None
+                and content_length > settings.ingest_max_bytes
+            ):
                 return JSONResponse(
-                    status_code=400,
-                    content={"error": "invalid_content_length"},
+                    status_code=413,
+                    content={"error": "payload_too_large"},
                 )
+
+            bounded_body = await _read_body_with_limit(
+                request, settings.ingest_max_bytes
+            )
+        except HTTPException as exc:
+            return JSONResponse(
+                status_code=exc.status_code, content={"error": exc.detail}
+            )
+
+        request = Request(request.scope, receive=_build_body_receiver(bounded_body))
 
     response = await call_next(request)
 

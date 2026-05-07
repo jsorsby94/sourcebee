@@ -9,6 +9,83 @@ export const dynamic = "force-dynamic";
 const MAX_BODY_BYTES = 8_192;
 const ALLOWED_EVENT_TYPES = new Set(["page_view", "route_click", "ui_event"]);
 
+class BodyReadError extends Error {
+  code: "invalid_content_length" | "payload_too_large";
+
+  constructor(code: "invalid_content_length" | "payload_too_large") {
+    super(code);
+    this.code = code;
+  }
+}
+
+function parseContentLength(headers: Headers): number | undefined {
+  const raw = headers.get("content-length");
+  if (raw === null) {
+    return undefined;
+  }
+
+  const trimmed = raw.trim();
+  if (!/^\d+$/.test(trimmed)) {
+    throw new BodyReadError("invalid_content_length");
+  }
+
+  const parsed = Number.parseInt(trimmed, 10);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    throw new BodyReadError("invalid_content_length");
+  }
+
+  return parsed;
+}
+
+async function readBodyWithLimit(request: Request, maxBytes: number): Promise<ArrayBuffer> {
+  const declaredLength = parseContentLength(request.headers);
+  if (declaredLength !== undefined && declaredLength > maxBytes) {
+    throw new BodyReadError("payload_too_large");
+  }
+
+  const stream = request.body;
+  if (!stream) {
+    return new ArrayBuffer(0);
+  }
+
+  const reader = stream.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+      break;
+    }
+
+    if (!value) {
+      continue;
+    }
+
+    totalBytes += value.byteLength;
+    if (totalBytes > maxBytes) {
+      try {
+        await reader.cancel();
+      } catch {
+        // no-op
+      }
+      throw new BodyReadError("payload_too_large");
+    }
+
+    chunks.push(value);
+  }
+
+  const output = new ArrayBuffer(totalBytes);
+  const view = new Uint8Array(output);
+  let offset = 0;
+  for (const chunk of chunks) {
+    view.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  return output;
+}
+
 function jsonError(status: number, code: string, message: string, requestId: string) {
   return NextResponse.json(
     {
@@ -64,14 +141,20 @@ export async function POST(request: Request) {
     });
   }
 
-  const bodyBuffer = await request.arrayBuffer();
-  if (bodyBuffer.byteLength > MAX_BODY_BYTES) {
+  let bodyBuffer: ArrayBuffer;
+  try {
+    bodyBuffer = await readBodyWithLimit(request, MAX_BODY_BYTES);
+  } catch (error) {
+    const errorCode = error instanceof BodyReadError ? error.code : "payload_too_large";
+    if (errorCode === "invalid_content_length") {
+      return jsonError(400, "invalid_content_length", "Invalid Content-Length header", requestId);
+    }
     return jsonError(413, "payload_too_large", "Analytics payload exceeds allowed size", requestId);
   }
 
   let payload: Record<string, unknown>;
   try {
-    const parsed = JSON.parse(new TextDecoder().decode(bodyBuffer));
+    const parsed = JSON.parse(new TextDecoder().decode(new Uint8Array(bodyBuffer)));
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
       return jsonError(400, "invalid_payload", "Analytics payload must be a JSON object", requestId);
     }

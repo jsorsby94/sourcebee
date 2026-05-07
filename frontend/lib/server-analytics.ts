@@ -1,3 +1,5 @@
+import { isIP } from "node:net";
+
 import { VISITOR_COOKIE_NAME } from "@/lib/analytics-config";
 import {
   hasAnalyticsConsent as hasAnalyticsConsentCookie,
@@ -102,15 +104,40 @@ function envLabel(): "dev" | "prod" | "test" {
   return "dev";
 }
 
-function extractIp(headers: Headers): string {
-  const forwarded = headers.get("x-forwarded-for");
-  if (forwarded) {
-    return forwarded.split(",", 1)[0].trim().slice(0, 128);
+function parseForwardedFor(value: string | null): string | null {
+  if (!value) {
+    return null;
   }
 
-  const realIp = headers.get("x-real-ip") ?? headers.get("cf-connecting-ip");
-  if (realIp) {
-    return realIp.trim().slice(0, 128);
+  const parts = value
+    .split(",")
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0);
+
+  for (let index = parts.length - 1; index >= 0; index -= 1) {
+    const candidate = parts[index];
+    if (candidate && isIP(candidate)) {
+      return candidate.slice(0, 128);
+    }
+  }
+
+  return null;
+}
+
+function extractIp(headers: Headers): string {
+  const cfConnectingIp = headers.get("cf-connecting-ip")?.trim();
+  if (cfConnectingIp && isIP(cfConnectingIp)) {
+    return cfConnectingIp.slice(0, 128);
+  }
+
+  const realIp = headers.get("x-real-ip")?.trim();
+  if (realIp && isIP(realIp)) {
+    return realIp.slice(0, 128);
+  }
+
+  const forwarded = parseForwardedFor(headers.get("x-forwarded-for"));
+  if (forwarded) {
+    return forwarded;
   }
 
   return "unknown";
@@ -155,7 +182,7 @@ export async function emitServerAnalyticsEvent(input: ServerAnalyticsEventInput)
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
-  const forwardedFor = input.request.headers.get("x-forwarded-for");
+  const forwardedFor = parseForwardedFor(input.request.headers.get("x-forwarded-for"));
 
   const cleanMetaRaw = sanitizeMeta(input.meta ?? {});
   const cleanMeta = cleanMetaRaw && typeof cleanMetaRaw === "object" && !Array.isArray(cleanMetaRaw) ? cleanMetaRaw : {};

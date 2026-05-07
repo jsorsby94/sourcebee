@@ -3,7 +3,6 @@ from starlette.requests import Request
 
 from app.core.config import get_settings
 
-
 HSTS_VALUE = "max-age=31536000; includeSubDomains"
 
 

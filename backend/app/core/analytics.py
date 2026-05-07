@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import ipaddress
 from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import urlsplit
@@ -96,19 +97,49 @@ def _normalize_referrer(referrer: str | None) -> str | None:
     return f"{parsed.scheme}://{parsed.netloc}{parsed.path or '/'}"
 
 
-def _extract_ip(request: Request) -> str:
-    forwarded = request.headers.get("x-forwarded-for")
-    if forwarded:
-        return forwarded.split(",", maxsplit=1)[0].strip()
+def _valid_ip(value: str | None) -> str | None:
+    if not value:
+        return None
 
-    real_ip = request.headers.get("x-real-ip") or request.headers.get(
-        "cf-connecting-ip"
+    candidate = value.strip()
+    if not candidate:
+        return None
+
+    try:
+        ipaddress.ip_address(candidate)
+    except ValueError:
+        return None
+
+    return candidate
+
+
+def _extract_forwarded_ip(forwarded_header: str | None) -> str | None:
+    if not forwarded_header:
+        return None
+
+    for token in reversed(forwarded_header.split(",")):
+        parsed = _valid_ip(token)
+        if parsed:
+            return parsed
+
+    return None
+
+
+def _extract_ip(request: Request) -> str:
+    forwarded = _extract_forwarded_ip(request.headers.get("x-forwarded-for"))
+    if forwarded:
+        return forwarded
+
+    real_ip = _valid_ip(
+        request.headers.get("x-real-ip") or request.headers.get("cf-connecting-ip")
     )
     if real_ip:
-        return real_ip.strip()
+        return real_ip
 
     if request.client and request.client.host:
-        return request.client.host
+        client_ip = _valid_ip(request.client.host)
+        if client_ip:
+            return client_ip
 
     return "unknown"
 

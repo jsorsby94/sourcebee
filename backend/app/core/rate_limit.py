@@ -1,5 +1,6 @@
 import logging
 import time
+import ipaddress
 from typing import Literal
 
 from fastapi import Request
@@ -15,12 +16,51 @@ logger = logging.getLogger(__name__)
 RateLimitProfile = Literal["default", "ssl", "file", "pdf"]
 
 
+def _valid_ip(value: str | None) -> str | None:
+    if not value:
+        return None
+
+    candidate = value.strip()
+    if not candidate:
+        return None
+
+    try:
+        ipaddress.ip_address(candidate)
+    except ValueError:
+        return None
+
+    return candidate
+
+
+def _extract_forwarded_ip(forwarded_header: str | None) -> str | None:
+    if not forwarded_header:
+        return None
+
+    # Work from right to left to reduce spoofing risk when upstream proxies append
+    # the true connecting address to any user-supplied chain.
+    for token in reversed(forwarded_header.split(",")):
+        parsed = _valid_ip(token)
+        if parsed is not None:
+            return parsed
+
+    return None
+
+
 def get_client_ip(request: Request) -> str:
-    forwarded = request.headers.get("x-forwarded-for")
+    forwarded = _extract_forwarded_ip(request.headers.get("x-forwarded-for"))
     if forwarded:
-        return forwarded.split(",", maxsplit=1)[0].strip()
+        return forwarded
+
+    real_ip = _valid_ip(
+        request.headers.get("x-real-ip") or request.headers.get("cf-connecting-ip")
+    )
+    if real_ip:
+        return real_ip
+
     if request.client and request.client.host:
-        return request.client.host
+        client_ip = _valid_ip(request.client.host)
+        if client_ip:
+            return client_ip
     return "unknown"
 
 

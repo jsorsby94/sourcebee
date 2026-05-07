@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isIP } from "node:net";
 
 import { TOOL_API_SLUGS, type ToolApiSlug } from "@/lib/tool-registry";
 import { emitServerAnalyticsEvent, hasAnalyticsConsent, readVisitorIdCookie } from "@/lib/server-analytics";
@@ -14,6 +15,117 @@ const BINARY_PASSTHROUGH_HEADERS = [
   "x-saved-bytes",
   "x-saved-percent",
 ] as const;
+
+class BodyReadError extends Error {
+  code: "invalid_content_length" | "payload_too_large";
+
+  constructor(code: "invalid_content_length" | "payload_too_large") {
+    super(code);
+    this.code = code;
+  }
+}
+
+function parseContentLength(headers: Headers): number | undefined {
+  const raw = headers.get("content-length");
+  if (raw === null) {
+    return undefined;
+  }
+
+  const trimmed = raw.trim();
+  if (!/^\d+$/.test(trimmed)) {
+    throw new BodyReadError("invalid_content_length");
+  }
+
+  const parsed = Number.parseInt(trimmed, 10);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    throw new BodyReadError("invalid_content_length");
+  }
+
+  return parsed;
+}
+
+function parseForwardedFor(headerValue: string | null): string | undefined {
+  if (!headerValue) {
+    return undefined;
+  }
+
+  const parts = headerValue
+    .split(",")
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0);
+
+  for (let index = parts.length - 1; index >= 0; index -= 1) {
+    const candidate = parts[index];
+    if (candidate && isIP(candidate)) {
+      return candidate;
+    }
+  }
+
+  return undefined;
+}
+
+function resolveClientIp(headers: Headers): string | undefined {
+  const cfConnectingIp = headers.get("cf-connecting-ip")?.trim();
+  if (cfConnectingIp && isIP(cfConnectingIp)) {
+    return cfConnectingIp;
+  }
+
+  const realIp = headers.get("x-real-ip")?.trim();
+  if (realIp && isIP(realIp)) {
+    return realIp;
+  }
+
+  return parseForwardedFor(headers.get("x-forwarded-for"));
+}
+
+async function readBodyWithLimit(request: Request, maxBytes: number): Promise<ArrayBuffer> {
+  const declaredLength = parseContentLength(request.headers);
+  if (declaredLength !== undefined && declaredLength > maxBytes) {
+    throw new BodyReadError("payload_too_large");
+  }
+
+  const stream = request.body;
+  if (!stream) {
+    return new ArrayBuffer(0);
+  }
+
+  const reader = stream.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+      break;
+    }
+
+    if (!value) {
+      continue;
+    }
+
+    totalBytes += value.byteLength;
+    if (totalBytes > maxBytes) {
+      try {
+        await reader.cancel();
+      } catch {
+        // no-op
+      }
+      throw new BodyReadError("payload_too_large");
+    }
+
+    chunks.push(value);
+  }
+
+  const output = new ArrayBuffer(totalBytes);
+  const view = new Uint8Array(output);
+  let offset = 0;
+  for (const chunk of chunks) {
+    view.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  return output;
+}
 
 function jsonError(status: number, code: string, message: string, requestId: string) {
   return NextResponse.json(
@@ -53,10 +165,7 @@ export async function POST(request: Request, context: { params: Promise<{ tool: 
   const analyticsConsentGranted = hasAnalyticsConsent(request);
   const visitorIdFromHeader = analyticsConsentGranted ? request.headers.get("x-visitor-id")?.trim() || undefined : undefined;
   const visitorId = analyticsConsentGranted ? (visitorIdFromHeader ?? readVisitorIdCookie(request) ?? undefined) : undefined;
-  const forwardedFor =
-    request.headers.get("x-forwarded-for") ??
-    request.headers.get("cf-connecting-ip") ??
-    request.headers.get("x-real-ip");
+  const clientIp = resolveClientIp(request.headers);
 
   if (!TOOL_API_SLUGS.includes(tool as ToolApiSlug)) {
     await emitServerAnalyticsEvent({
@@ -77,11 +186,14 @@ export async function POST(request: Request, context: { params: Promise<{ tool: 
   const rawContentType = request.headers.get("content-type") ?? "";
   const contentTypeForCheck = rawContentType.toLowerCase();
   const isMultipart = contentTypeForCheck.includes("multipart/form-data");
+  const maxBodyBytes = isMultipart ? MAX_MULTIPART_BODY_BYTES : MAX_JSON_BODY_BYTES;
 
-  const bodyBuffer = await request.arrayBuffer();
-  const bodyBytes = bodyBuffer.byteLength;
-
-  if (!isMultipart && bodyBytes > MAX_JSON_BODY_BYTES) {
+  let requestBody: ArrayBuffer;
+  try {
+    requestBody = await readBodyWithLimit(request, maxBodyBytes);
+  } catch (error) {
+    const errorCode = error instanceof BodyReadError ? error.code : "payload_too_large";
+    const statusCode = errorCode === "invalid_content_length" ? 400 : 413;
     await emitServerAnalyticsEvent({
       request,
       eventType: "tool_run",
@@ -90,40 +202,27 @@ export async function POST(request: Request, context: { params: Promise<{ tool: 
       toolSlug: tool,
       requestId,
       visitorId,
-      statusCode: 413,
+      statusCode,
       latencyMs: Date.now() - startedAt,
       meta: {
-        is_multipart: false,
-        request_bytes: bodyBytes,
-        error_code: "payload_too_large",
+        is_multipart: isMultipart,
+        error_code: errorCode,
       },
     });
-    return jsonError(413, "payload_too_large", "Request body exceeds allowed size", requestId);
+    if (errorCode === "invalid_content_length") {
+      return jsonError(400, "invalid_content_length", "Invalid Content-Length header", requestId);
+    }
+    const message = isMultipart
+      ? "Uploaded payload exceeds allowed size"
+      : "Request body exceeds allowed size";
+    return jsonError(413, "payload_too_large", message, requestId);
   }
 
-  if (isMultipart && bodyBytes > MAX_MULTIPART_BODY_BYTES) {
-    await emitServerAnalyticsEvent({
-      request,
-      eventType: "tool_run",
-      source: "frontend_proxy",
-      pathname,
-      toolSlug: tool,
-      requestId,
-      visitorId,
-      statusCode: 413,
-      latencyMs: Date.now() - startedAt,
-      meta: {
-        is_multipart: true,
-        request_bytes: bodyBytes,
-        error_code: "payload_too_large",
-      },
-    });
-    return jsonError(413, "payload_too_large", "Uploaded payload exceeds allowed size", requestId);
-  }
+  const bodyBytes = requestBody.byteLength;
 
   if (!isMultipart) {
     try {
-      JSON.parse(new TextDecoder().decode(bodyBuffer));
+      JSON.parse(new TextDecoder().decode(new Uint8Array(requestBody)));
     } catch {
       await emitServerAnalyticsEvent({
         request,
@@ -157,10 +256,10 @@ export async function POST(request: Request, context: { params: Promise<{ tool: 
       headers: {
         "x-request-id": requestId,
         ...(visitorId ? { "x-visitor-id": visitorId } : {}),
-        ...(forwardedFor ? { "x-forwarded-for": forwardedFor } : {}),
+        ...(clientIp ? { "x-forwarded-for": clientIp } : {}),
         ...(rawContentType ? { "content-type": rawContentType } : {}),
       },
-      body: bodyBuffer,
+      body: requestBody,
       signal: controller.signal,
       cache: "no-store",
     });
