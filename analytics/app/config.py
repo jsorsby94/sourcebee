@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     mongodb_db_name: str = "sourcebee_dev_analytics"
 
     ingest_max_bytes: int = Field(default=16_384, ge=1_024, le=262_144)
-    dashboard_default_window_hours: int = Field(default=24, ge=1, le=720)
+    dashboard_default_window_hours: int = Field(default=8_760, ge=1, le=8_784)
 
     @property
     def env_label(self) -> str:

@@ -71,6 +71,7 @@ services:
       APP_ENV: dev
       NEXT_PUBLIC_APP_ENV: dev
       NEXT_PUBLIC_SITE_URL: http://localhost:4000
+      HOSTNAME: 0.0.0.0
       NEXT_PUBLIC_ADS_ENABLED: ${DEV_NEXT_PUBLIC_ADS_ENABLED:-false}
       NEXT_PUBLIC_ANALYTICS_ENABLED: true
       NEXT_PUBLIC_VISITOR_COOKIE_NAME: ${DEV_NEXT_PUBLIC_VISITOR_COOKIE_NAME:-sourcebee_vid}
@@ -89,12 +90,13 @@ services:
     read_only: true
     tmpfs:
       - /tmp
+      - /app/.next/cache
     security_opt:
       - no-new-privileges:true
     networks:
       - app_internal_dev
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:4000"]
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:4000"]
       interval: 20s
       timeout: 5s
       retries: 5
@@ -125,7 +127,7 @@ services:
       MONGODB_URL: ${DEV_MONGODB_URL:-mongodb://mongodb-dev:27017}
       MONGODB_DB_NAME: ${DEV_MONGODB_DB_NAME:-sourcebee_dev_analytics}
       INGEST_MAX_BYTES: ${DEV_ANALYTICS_INGEST_MAX_BYTES:-16384}
-      DASHBOARD_DEFAULT_WINDOW_HOURS: ${DEV_ANALYTICS_DASHBOARD_HOURS:-24}
+      DASHBOARD_DEFAULT_WINDOW_HOURS: ${DEV_ANALYTICS_DASHBOARD_HOURS:-8760}
     expose:
       - "4100"
     ports:
@@ -220,6 +222,7 @@ services:
       APP_ENV: prod
       NEXT_PUBLIC_APP_ENV: prod
       NEXT_PUBLIC_SITE_URL: ${PROD_NEXT_PUBLIC_SITE_URL:-https://sourcebee.org}
+      HOSTNAME: 0.0.0.0
       NEXT_PUBLIC_ADS_ENABLED: ${PROD_NEXT_PUBLIC_ADS_ENABLED:-false}
       NEXT_PUBLIC_ANALYTICS_ENABLED: true
       NEXT_PUBLIC_VISITOR_COOKIE_NAME: ${PROD_NEXT_PUBLIC_VISITOR_COOKIE_NAME:-sourcebee_vid}
@@ -238,12 +241,13 @@ services:
     read_only: true
     tmpfs:
       - /tmp
+      - /app/.next/cache
     security_opt:
       - no-new-privileges:true
     networks:
       - app_internal_prod
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:4000"]
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:4000"]
       interval: 20s
       timeout: 5s
       retries: 5
@@ -274,7 +278,7 @@ services:
       MONGODB_URL: ${PROD_MONGODB_URL:-mongodb://mongodb-prod:27017}
       MONGODB_DB_NAME: ${PROD_MONGODB_DB_NAME:-sourcebee_prod_analytics}
       INGEST_MAX_BYTES: ${PROD_ANALYTICS_INGEST_MAX_BYTES:-16384}
-      DASHBOARD_DEFAULT_WINDOW_HOURS: ${PROD_ANALYTICS_DASHBOARD_HOURS:-24}
+      DASHBOARD_DEFAULT_WINDOW_HOURS: ${PROD_ANALYTICS_DASHBOARD_HOURS:-8760}
     expose:
       - "4100"
     ports:

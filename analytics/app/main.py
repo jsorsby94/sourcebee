@@ -553,6 +553,27 @@ def dashboard() -> str:
     </div>
 
     <script>
+      function toDateTimeLocalValue(date) {
+        const timezoneOffsetMs = date.getTimezoneOffset() * 60 * 1000;
+        return new Date(date.getTime() - timezoneOffsetMs).toISOString().slice(0, 16);
+      }
+
+      function initializeDefaultWindow() {
+        const startInput = document.getElementById('start');
+        const endInput = document.getElementById('end');
+
+        const end = endInput.value ? new Date(endInput.value) : new Date();
+        if (!endInput.value) {
+          endInput.value = toDateTimeLocalValue(end);
+        }
+
+        if (!startInput.value) {
+          const start = new Date(end);
+          start.setDate(start.getDate() - 365);
+          startInput.value = toDateTimeLocalValue(start);
+        }
+      }
+
       function queryString() {
         const params = new URLSearchParams();
         const start = document.getElementById('start').value;
@@ -626,6 +647,7 @@ def dashboard() -> str:
         renderRows('events', eventRows, ['occurred_at', 'event_type', 'pathname', 'ip', 'status_code']);
       }
 
+      initializeDefaultWindow();
       document.getElementById('refresh').addEventListener('click', refresh);
       refresh().catch((err) => {
         console.error('Dashboard refresh failed', err);
